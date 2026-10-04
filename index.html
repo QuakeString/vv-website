@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Volt &amp; Victor · Handcrafted electronics for students</title>
+  <meta name="description" content="Precision-crafted, school-compliant electronic projects for students in Murshidabad, West Bengal. Handmade circuits, project consultation and components at student-friendly prices.">
+  <meta name="theme-color" content="#0c1411">
+  <meta property="og:title" content="Volt & Victor">
+  <meta property="og:description" content="Handcrafted electronic projects for students in Murshidabad.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    // Apply saved theme before paint to avoid a flash.
+    try { var t = localStorage.getItem('vv-theme'); if (t && t !== 'auto') document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="#top" aria-label="Volt & Victor home">
+        <img src="assets/favicon.svg" alt="" width="32" height="32">
+        <span>Volt <b>&amp;</b> Victor</span>
+      </a>
+      <nav class="nav" id="nav" aria-label="Primary">
+        <a href="#services">Services</a>
+        <a href="#shop">Shop</a>
+        <a href="#gallery">Gallery</a>
+        <a href="#about">About us</a>
+        <a href="#faq">FAQ</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn" id="theme-toggle" type="button" aria-label="Theme: auto" title="Theme: auto">
+          <span class="theme-icon" aria-hidden="true">◐</span>
+        </button>
+        <button class="icon-btn cart-btn" id="cart-open" type="button" aria-label="Open cart">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 8H6.2M10 21h.01M17 21h.01"/></svg>
+          <span class="cart-count" id="cart-count">0</span>
+        </button>
+        <button class="icon-btn menu-btn" id="menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- Hero -->
+    <section class="hero" id="top">
+      <div class="container hero-grid">
+        <div class="hero-copy reveal">
+          <p class="eyebrow">Handcrafted electronics for students</p>
+          <h1>Precision-crafted electronic projects for <span class="grad">students</span></h1>
+          <p class="lead">From the first idea to a working circuit on your desk. Every project is built by hand, follows your school's guidelines, and is priced for a student's pocket.</p>
+          <ul class="ticks">
+            <li>100% handcrafted</li>
+            <li>School compliant</li>
+            <li>Student-friendly prices</li>
+          </ul>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="#contact">Place an order</a>
+            <a class="btn btn-ghost" href="#services">Explore services</a>
+          </div>
+        </div>
+        <div class="hero-visual reveal" aria-hidden="true">
+          <svg class="circuit" viewBox="0 0 400 400">
+            <defs>
+              <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1">
+                <stop offset="0" stop-color="var(--accent)"/>
+                <stop offset="1" stop-color="var(--accent-2)"/>
+              </linearGradient>
+            </defs>
+            <rect x="40" y="40" width="320" height="320" rx="28" class="board"/>
+            <g class="traces" stroke="url(#g1)">
+              <path d="M80 120 H170 V200 H260"/>
+              <path d="M80 280 H140 V230 H220 V300 H320"/>
+              <path d="M320 100 V170 H260"/>
+              <path d="M200 80 V140 H300 V230"/>
+            </g>
+            <g class="pads">
+              <circle cx="80" cy="120" r="8"/><circle cx="80" cy="280" r="8"/>
+              <circle cx="320" cy="100" r="8"/><circle cx="320" cy="300" r="8"/>
+              <circle cx="200" cy="80" r="8"/>
+            </g>
+            <rect x="230" y="180" width="70" height="50" rx="6" class="chip"/>
+            <g class="chip-legs"><path d="M240 175v-8M255 175v-8M270 175v-8M285 175v-8M240 235v8M255 235v8M270 235v8M285 235v8"/></g>
+            <circle cx="140" cy="200" r="14" class="led"/>
+          </svg>
+        </div>
+      </div>
+      <div class="container">
+        <dl class="stats reveal">
+          <div><dt>Projects delivered</dt><dd>100+</dd></div>
+          <div><dt>Rates in Murshidabad</dt><dd>Lowest</dd></div>
+          <div><dt>Handcrafted</dt><dd>100%</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <!-- Services -->
+    <section class="section" id="services">
+      <div class="container">
+        <header class="section-head reveal">
+          <p class="eyebrow">Services</p>
+          <h2>Everything you need for your project</h2>
+        </header>
+        <div class="cards cards-4">
+          <article class="card reveal">
+            <div class="card-icon">💡</div>
+            <h3>Project consultation</h3>
+            <p>Step-by-step help, from choosing a project idea to sourcing components.</p>
+          </article>
+          <article class="card reveal">
+            <div class="card-icon">🔧</div>
+            <h3>Handcrafted circuits &amp; models</h3>
+            <p>Working circuits and models, built by hand to school standards.</p>
+          </article>
+          <article class="card reveal">
+            <div class="card-icon">₹</div>
+            <h3>Student-friendly pricing</h3>
+            <p>The most competitive rates in Murshidabad, so a good project never breaks the budget.</p>
+          </article>
+          <article class="card reveal">
+            <div class="card-icon">✅</div>
+            <h3>School-compliant projects</h3>
+            <p>Built to follow handmade project guidelines, so you avoid the risk of disqualification.</p>
+          </article>
+        </div>
+
+        <h3 class="sub-head reveal">How an order works</h3>
+        <ol class="steps">
+          <li class="reveal"><span class="step-n">1</span><h4>Tell us your project</h4><p>Share your class, topic and submission date.</p></li>
+          <li class="reveal"><span class="step-n">2</span><h4>Choose the design</h4><p>We help you pick a design that fits your idea and budget.</p></li>
+          <li class="reveal"><span class="step-n">3</span><h4>Hand-built creation</h4><p>Your project is assembled and tested by hand.</p></li>
+          <li class="reveal"><span class="step-n">4</span><h4>Ready for your deadline</h4><p>Delivered on time, with an explanation of how it works.</p></li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- Appointment -->
+    <section class="section section-alt" id="appointment">
+      <div class="container split">
+        <div class="reveal">
+          <p class="eyebrow">Expert guidance</p>
+          <h2>Book a free consultation</h2>
+          <p class="lead">Not sure what to build? Book a time and we will walk you through ideas, components and costs.</p>
+          <p class="muted">Available Monday to Saturday, 10:00 AM to 7:00 PM IST.</p>
+        </div>
+        <form class="form card reveal" data-wa-form="appointment">
+          <label>Full name<input name="name" required autocomplete="name"></label>
+          <label>Phone / WhatsApp<input name="phone" type="tel" required autocomplete="tel"></label>
+          <label>Preferred date &amp; time<input name="when" type="datetime-local" required></label>
+          <label>About your project<textarea name="details" rows="3" placeholder="Class, topic, deadline…"></textarea></label>
+          <button class="btn btn-primary" type="submit">Book on WhatsApp</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Membership -->
+    <section class="section" id="membership">
+      <div class="container">
+        <header class="section-head reveal">
+          <p class="eyebrow">Subscription card</p>
+          <h2>Member benefits</h2>
+          <p class="lead">Order often? A weekly membership saves you money on every project.</p>
+        </header>
+        <div class="cards cards-4 tiers">
+          <article class="card tier tier-bronze reveal">
+            <h3>Bronze</h3>
+            <p class="price">₹10<span>/week</span></p>
+            <p class="off">5% off</p>
+            <ul><li>Discount on every order</li></ul>
+          </article>
+          <article class="card tier tier-silver reveal">
+            <h3>Silver</h3>
+            <p class="price">₹12<span>/week</span></p>
+            <p class="off">10% off</p>
+            <ul><li>Discount on every order</li></ul>
+          </article>
+          <article class="card tier tier-silverplus reveal">
+            <h3>Silver+</h3>
+            <p class="price">₹18<span>/week</span></p>
+            <p class="off">15% off</p>
+            <ul><li>Discount on every order</li><li>Priority support</li></ul>
+          </article>
+          <article class="card tier tier-gold featured reveal">
+            <span class="badge">Best value</span>
+            <h3>Gold</h3>
+            <p class="price">₹22<span>/week</span></p>
+            <p class="off">20% off</p>
+            <ul><li>Discount on every order</li><li>Priority support</li><li>Free consultations</li></ul>
+          </article>
+        </div>
+        <p class="center reveal"><a class="btn btn-ghost" href="#" data-wa-text="Hi Volt & Victor, I'd like to join the membership.">Join on WhatsApp</a></p>
+      </div>
+    </section>
+
+    <!-- Shop -->
+    <section class="section section-alt" id="shop">
+      <div class="container">
+        <header class="section-head reveal">
+          <p class="eyebrow">Online store</p>
+          <h2>Components</h2>
+          <p class="lead">Add what you need to the cart and send the list on WhatsApp. We confirm prices and availability in the chat.</p>
+        </header>
+        <div class="products" id="products"></div>
+        <p class="muted center">We stock more components than are listed here. Just ask.</p>
+      </div>
+    </section>
+
+    <!-- Gallery -->
+    <section class="section" id="gallery">
+      <div class="container">
+        <header class="section-head reveal">
+          <p class="eyebrow">Portfolio</p>
+          <h2>Our work</h2>
+          <p class="lead">A few of the projects we have delivered.</p>
+        </header>
+        <div class="gallery">
+          <figure class="reveal"><div class="ph ph-1">⚡</div><figcaption>Project photo</figcaption></figure>
+          <figure class="reveal"><div class="ph ph-2">🔋</div><figcaption>Project photo</figcaption></figure>
+          <figure class="reveal"><div class="ph ph-3">💡</div><figcaption>Project photo</figcaption></figure>
+          <figure class="reveal"><div class="ph ph-4">🤖</div><figcaption>Project photo</figcaption></figure>
+          <figure class="reveal"><div class="ph ph-5">📡</div><figcaption>Project photo</figcaption></figure>
+          <figure class="reveal"><div class="ph ph-6">🔔</div><figcaption>Project photo</figcaption></figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- About -->
+    <section class="section section-alt" id="about">
+      <div class="container">
+        <header class="section-head reveal">
+          <p class="eyebrow">About us</p>
+          <h2>Meet the team</h2>
+          <p class="lead">A small team of electronics enthusiasts in Murshidabad, helping students build projects they understand and are proud of.</p>
+        </header>
+        <div class="team">
+          <article class="member card reveal"><div class="avatar">V</div><h3>Team member</h3><p class="muted">Founder</p></article>
+          <article class="member card reveal"><div class="avatar">V</div><h3>Team member</h3><p class="muted">Co-founder</p></article>
+          <article class="member card reveal"><div class="avatar">+</div><h3>Team member</h3><p class="muted">Builder</p></article>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section" id="faq">
+      <div class="container narrow">
+        <header class="section-head reveal">
+          <p class="eyebrow">FAQ</p>
+          <h2>Common questions</h2>
+        </header>
+        <div class="faq">
+          <details class="reveal"><summary>Who can order?</summary><p>Our service is for students in Murshidabad.</p></details>
+          <details class="reveal"><summary>Do I need any experience?</summary><p>No. We guide you step by step, from choosing a project to assembling the circuit.</p></details>
+          <details class="reveal"><summary>Will my project follow school rules?</summary><p>Projects follow the handmade project guidelines of your school, so students avoid the risk of disqualification.</p></details>
+          <details class="reveal"><summary>How do I order?</summary><p>Add components to the cart or fill in any form on this page. Each one opens WhatsApp with your details ready to send.</p></details>
+          <details class="reveal"><summary>When are you available?</summary><p>Monday to Saturday, 10:00 AM to 7:00 PM IST.</p></details>
+          <details class="reveal"><summary>My deadline is very close. Can you help?</summary><p>Tell us your submission date when you get in touch. We plan the work around it.</p></details>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact -->
+    <section class="section section-alt" id="contact">
+      <div class="container split">
+        <div class="reveal">
+          <p class="eyebrow">Contact</p>
+          <h2>Start your project</h2>
+          <p class="lead">Tell us what you need. The form opens WhatsApp with your details filled in.</p>
+          <ul class="contact-list">
+            <li><span>Email</span><a href="mailto:voltandvictor@gmail.com">voltandvictor@gmail.com</a></li>
+            <li><span>Phone / WhatsApp</span><a href="tel:+918653984069">+91 86539 84069</a></li>
+            <li><span>Location</span>Murshidabad, West Bengal, India</li>
+          </ul>
+        </div>
+        <form class="form card reveal" data-wa-form="enquiry">
+          <label>Full name<input name="name" required autocomplete="name"></label>
+          <label>Phone / WhatsApp<input name="phone" type="tel" required autocomplete="tel"></label>
+          <label>Project type
+            <select name="type">
+              <option>Working model</option>
+              <option>Circuit project</option>
+              <option>Consultation only</option>
+              <option>Components only</option>
+              <option>Other</option>
+            </select>
+          </label>
+          <label>Requirements<textarea name="details" rows="4" placeholder="Topic, class, submission date…" required></textarea></label>
+          <button class="btn btn-primary" type="submit">Send on WhatsApp</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a class="logo" href="#top"><img src="assets/favicon.svg" alt="" width="28" height="28"><span>Volt <b>&amp;</b> Victor</span></a>
+        <p class="muted">Handcrafted electronics for students in Murshidabad.</p>
+      </div>
+      <nav aria-label="Footer">
+        <a href="#services">Services</a>
+        <a href="#shop">Shop</a>
+        <a href="#gallery">Gallery</a>
+        <a href="#faq">FAQ</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <div>
+        <p><strong>Get updates on WhatsApp</strong></p>
+        <a class="btn btn-ghost btn-sm" href="#" data-wa-text="Hi Volt & Victor, please add me to your WhatsApp updates.">Subscribe</a>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p class="muted">© <span id="year">2026</span> Volt &amp; Victor. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Cart drawer -->
+  <div class="drawer-backdrop" id="cart-backdrop" hidden></div>
+  <aside class="drawer" id="cart" aria-label="Cart" aria-hidden="true">
+    <div class="drawer-head">
+      <h2>Your cart</h2>
+      <button class="icon-btn" id="cart-close" type="button" aria-label="Close cart">✕</button>
+    </div>
+    <ul class="cart-items" id="cart-items"></ul>
+    <p class="muted cart-empty" id="cart-empty">Your cart is empty. Add components from the shop.</p>
+    <div class="drawer-foot">
+      <button class="btn btn-ghost btn-sm" id="cart-clear" type="button">Clear</button>
+      <button class="btn btn-primary" id="cart-send" type="button">Send order on WhatsApp</button>
+    </div>
+  </aside>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
