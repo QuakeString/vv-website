@@ -2,40 +2,38 @@
   'use strict';
 
   var WHATSAPP_NUMBER = '918653984069';
+  var root = document.documentElement;
 
   function waLink(text) {
     return 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(text);
   }
+  function openWhatsApp(text) {
+    window.open(waLink(text), '_blank', 'noopener');
+  }
 
-  // --- Theme toggle (auto -> light -> dark -> auto) ---
-  var themeBtn = document.getElementById('theme-toggle');
-  var root = document.documentElement;
+  // --- Colour mode: light / dark / system ---
   var THEME_KEY = 'vv-theme';
-
-  function currentTheme() {
-    try { return localStorage.getItem(THEME_KEY) || 'auto'; } catch (e) { return 'auto'; }
+  var themeBtns = document.querySelectorAll('#theme-switch button');
+  function savedMode() {
+    try {
+      var v = localStorage.getItem(THEME_KEY);
+      return v === 'light' || v === 'dark' ? v : 'system';
+    } catch (e) { return 'system'; }
   }
-  function applyTheme(mode) {
-    if (mode === 'auto') {
-      delete root.dataset.theme;
-    } else {
-      root.dataset.theme = mode;
-    }
-    if (themeBtn) {
-      themeBtn.title = 'Theme: ' + mode;
-      themeBtn.setAttribute('aria-label', 'Theme: ' + mode);
-      themeBtn.querySelector('.theme-icon').textContent = mode === 'dark' ? '🌙' : mode === 'light' ? '☀️' : '◐';
-    }
-  }
-  applyTheme(currentTheme());
-  if (themeBtn) {
-    themeBtn.addEventListener('click', function () {
-      var order = ['auto', 'light', 'dark'];
-      var next = order[(order.indexOf(currentTheme()) + 1) % order.length];
-      try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
-      applyTheme(next);
+  function applyMode(mode) {
+    if (mode === 'system') delete root.dataset.theme; else root.dataset.theme = mode;
+    themeBtns.forEach(function (b) {
+      b.setAttribute('aria-checked', b.getAttribute('data-mode') === mode ? 'true' : 'false');
     });
   }
+  applyMode(savedMode());
+  themeBtns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      var m = b.getAttribute('data-mode');
+      try { localStorage.setItem(THEME_KEY, m); } catch (e) {}
+      applyMode(m);
+    });
+  });
 
   // --- Mobile nav ---
   var menuBtn = document.getElementById('menu-toggle');
@@ -45,11 +43,11 @@
       var open = nav.classList.toggle('open');
       menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
     });
-    nav.querySelectorAll('a').forEach(function (a) {
-      a.addEventListener('click', function () {
+    nav.addEventListener('click', function (e) {
+      if (e.target.tagName === 'A') {
         nav.classList.remove('open');
         menuBtn.setAttribute('aria-expanded', 'false');
-      });
+      }
     });
   }
 
@@ -57,13 +55,10 @@
   var revealEls = document.querySelectorAll('.reveal');
   if ('IntersectionObserver' in window && revealEls.length) {
     var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('in');
-          io.unobserve(entry.target);
-        }
+      entries.forEach(function (en) {
+        if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
       });
-    }, { threshold: 0.12 });
+    }, { threshold: 0.08 });
     revealEls.forEach(function (el) { io.observe(el); });
   } else {
     revealEls.forEach(function (el) { el.classList.add('in'); });
@@ -73,148 +68,134 @@
   var yearEl = document.getElementById('year');
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-  // --- Products / cart ---
-  var PRODUCTS = [
-    { id: 'led', name: 'LEDs', icon: '💡', price: '₹2 each' },
-    { id: 'resistor', name: 'Resistors', icon: '⏚', price: '₹1 each' },
-    { id: 'capacitor', name: 'Capacitors', icon: '🔵', price: '₹3 each' },
-    { id: 'transistor', name: 'Transistors', icon: '🔺', price: '₹5 each' },
-    { id: 'breadboard', name: 'Breadboard', icon: '🧩', price: '₹60' },
-    { id: 'jumper', name: 'Jumper wires', icon: '🔌', price: '₹30 / pack' },
-    { id: 'motor', name: 'Motors', icon: '⚙️', price: '₹25 each' },
-    { id: 'buzzer', name: 'Buzzers', icon: '🔔', price: '₹15 each' }
-  ];
-
-  var cart = {}; // id -> qty
-  var CART_KEY = 'vv-cart';
-  try {
-    var saved = JSON.parse(localStorage.getItem(CART_KEY) || '{}');
-    if (saved && typeof saved === 'object') cart = saved;
-  } catch (e) {}
-
-  var productsEl = document.getElementById('products');
-  if (productsEl) {
-    productsEl.innerHTML = PRODUCTS.map(function (p) {
-      return (
-        '<article class="product reveal">' +
-        '<div class="icon">' + p.icon + '</div>' +
-        '<h4>' + p.name + '</h4>' +
-        '<p class="p">' + p.price + '</p>' +
-        '<button class="btn btn-ghost btn-sm" type="button" data-add="' + p.id + '">Add to cart</button>' +
-        '</article>'
-      );
-    }).join('');
-    // newly injected .reveal cards: observe them too
-    productsEl.querySelectorAll('.reveal').forEach(function (el) {
-      el.classList.add('in');
+  // --- Portfolio filter + lightbox ---
+  var chips = document.querySelectorAll('.chip[data-filter]');
+  var pcards = document.querySelectorAll('.pcard');
+  chips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      var f = chip.getAttribute('data-filter');
+      chips.forEach(function (c) { c.setAttribute('aria-pressed', c === chip ? 'true' : 'false'); });
+      pcards.forEach(function (card) { card.hidden = !(f === 'all' || card.getAttribute('data-cat') === f); });
     });
-    productsEl.addEventListener('click', function (e) {
-      var btn = e.target.closest('[data-add]');
-      if (!btn) return;
-      var id = btn.getAttribute('data-add');
-      cart[id] = (cart[id] || 0) + 1;
-      persistCart();
+  });
+  var lb = document.getElementById('lightbox');
+  var lbImg = document.getElementById('lb-img');
+  var lbCap = document.getElementById('lb-cap');
+  var lbClose = document.getElementById('lb-close');
+  var lastCard = null;
+  function closeLightbox() {
+    if (lb.hidden) return;
+    lb.hidden = true;
+    if (lastCard) lastCard.focus();
+  }
+  if (lb) {
+    pcards.forEach(function (card) {
+      card.addEventListener('click', function () {
+        lastCard = card;
+        lbImg.src = card.getAttribute('data-src');
+        lbImg.alt = card.getAttribute('data-title');
+        lbCap.textContent = card.getAttribute('data-title');
+        lb.hidden = false;
+        lbClose.focus();
+      });
+    });
+    lbClose.addEventListener('click', closeLightbox);
+    lb.addEventListener('click', function (e) { if (e.target === lb) closeLightbox(); });
+  }
+
+  // --- Shop filter ---
+  var sChips = document.querySelectorAll('[data-sfilter]');
+  var prods = document.querySelectorAll('.product');
+  sChips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      var f = chip.getAttribute('data-sfilter');
+      sChips.forEach(function (c) { c.setAttribute('aria-pressed', c === chip ? 'true' : 'false'); });
+      prods.forEach(function (p) { p.hidden = !(f === 'all' || p.getAttribute('data-scat') === f); });
+    });
+  });
+
+  // --- Cart drawer ---
+  var CART_KEY = 'vv-cart';
+  var cartEl = document.getElementById('cart');
+  var backdrop = document.getElementById('cart-backdrop');
+  var listEl = document.getElementById('cart-items');
+  var emptyEl = document.getElementById('cart-empty');
+  var countEl = document.getElementById('cart-count');
+  var cart = {};
+  try {
+    var stored = JSON.parse(localStorage.getItem(CART_KEY) || '{}');
+    if (stored && typeof stored === 'object') cart = stored;
+  } catch (e) { cart = {}; }
+
+  function saveCart() {
+    try { localStorage.setItem(CART_KEY, JSON.stringify(cart)); } catch (e) {}
+  }
+  function openCart() {
+    cartEl.dataset.open = 'true';
+    cartEl.setAttribute('aria-hidden', 'false');
+    backdrop.hidden = false;
+  }
+  function closeCart() {
+    cartEl.dataset.open = 'false';
+    cartEl.setAttribute('aria-hidden', 'true');
+    backdrop.hidden = true;
+  }
+  function renderCart() {
+    var names = Object.keys(cart), total = 0;
+    listEl.innerHTML = '';
+    names.forEach(function (n) {
+      total += cart[n];
+      var li = document.createElement('li');
+      var s = document.createElement('span');
+      s.textContent = n + ' × ' + cart[n];
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = '✕';
+      b.setAttribute('aria-label', 'Remove ' + n);
+      b.addEventListener('click', function () { delete cart[n]; saveCart(); renderCart(); });
+      li.appendChild(s);
+      li.appendChild(b);
+      listEl.appendChild(li);
+    });
+    countEl.textContent = String(total);
+    emptyEl.style.display = names.length ? 'none' : 'block';
+  }
+  document.getElementById('cart-open').addEventListener('click', openCart);
+  document.getElementById('cart-close').addEventListener('click', closeCart);
+  backdrop.addEventListener('click', closeCart);
+  document.querySelectorAll('[data-add]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var n = btn.getAttribute('data-add');
+      cart[n] = (cart[n] || 0) + 1;
+      saveCart();
       renderCart();
       openCart();
     });
-  }
-
-  function persistCart() {
-    try { localStorage.setItem(CART_KEY, JSON.stringify(cart)); } catch (e) {}
-  }
-
-  function cartCount() {
-    return Object.keys(cart).reduce(function (sum, id) { return sum + cart[id]; }, 0);
-  }
-
-  var cartCountEl = document.getElementById('cart-count');
-  var cartItemsEl = document.getElementById('cart-items');
-  var cartEmptyEl = document.getElementById('cart-empty');
-
-  function renderCart() {
-    if (cartCountEl) cartCountEl.textContent = String(cartCount());
-    if (!cartItemsEl) return;
-    var ids = Object.keys(cart).filter(function (id) { return cart[id] > 0; });
-    if (!ids.length) {
-      cartItemsEl.innerHTML = '';
-      if (cartEmptyEl) cartEmptyEl.style.display = 'block';
-      return;
-    }
-    if (cartEmptyEl) cartEmptyEl.style.display = 'none';
-    cartItemsEl.innerHTML = ids.map(function (id) {
-      var p = PRODUCTS.find(function (x) { return x.id === id; });
-      if (!p) return '';
-      return (
-        '<li>' +
-        '<span>' + p.icon + ' ' + p.name + ' × ' + cart[id] + '</span>' +
-        '<button type="button" data-remove="' + id + '" aria-label="Remove ' + p.name + '">✕</button>' +
-        '</li>'
-      );
-    }).join('');
-  }
+  });
+  document.getElementById('cart-clear').addEventListener('click', function () {
+    cart = {};
+    saveCart();
+    renderCart();
+  });
+  document.getElementById('cart-send').addEventListener('click', function () {
+    var names = Object.keys(cart);
+    if (!names.length) { openCart(); return; }
+    var lines = names.map(function (n) { return '- ' + n + ' × ' + cart[n]; });
+    openWhatsApp('Hi Volt & Victor, I would like to order:\n' + lines.join('\n') + '\nPlease confirm the final price.');
+  });
   renderCart();
 
-  if (cartItemsEl) {
-    cartItemsEl.addEventListener('click', function (e) {
-      var btn = e.target.closest('[data-remove]');
-      if (!btn) return;
-      delete cart[btn.getAttribute('data-remove')];
-      persistCart();
-      renderCart();
-    });
-  }
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    closeLightbox();
+    if (cartEl.dataset.open === 'true') closeCart();
+  });
 
-  var cartClearBtn = document.getElementById('cart-clear');
-  if (cartClearBtn) {
-    cartClearBtn.addEventListener('click', function () {
-      cart = {};
-      persistCart();
-      renderCart();
-    });
-  }
-
-  var cartSendBtn = document.getElementById('cart-send');
-  if (cartSendBtn) {
-    cartSendBtn.addEventListener('click', function () {
-      var ids = Object.keys(cart).filter(function (id) { return cart[id] > 0; });
-      var lines = ids.map(function (id) {
-        var p = PRODUCTS.find(function (x) { return x.id === id; });
-        return p ? ('- ' + p.name + ' × ' + cart[id]) : null;
-      }).filter(Boolean);
-      var text = lines.length
-        ? 'Hi Volt & Victor, I would like to order:\n' + lines.join('\n')
-        : 'Hi Volt & Victor, I would like to order some components.';
-      window.open(waLink(text), '_blank', 'noopener');
-    });
-  }
-
-  // --- Cart drawer open/close ---
-  var cartDrawer = document.getElementById('cart');
-  var cartBackdrop = document.getElementById('cart-backdrop');
-  var cartOpenBtn = document.getElementById('cart-open');
-  var cartCloseBtn = document.getElementById('cart-close');
-
-  function openCart() {
-    if (!cartDrawer) return;
-    cartDrawer.dataset.open = 'true';
-    cartDrawer.setAttribute('aria-hidden', 'false');
-    if (cartBackdrop) cartBackdrop.hidden = false;
-  }
-  function closeCart() {
-    if (!cartDrawer) return;
-    cartDrawer.dataset.open = 'false';
-    cartDrawer.setAttribute('aria-hidden', 'true');
-    if (cartBackdrop) cartBackdrop.hidden = true;
-  }
-  if (cartOpenBtn) cartOpenBtn.addEventListener('click', openCart);
-  if (cartCloseBtn) cartCloseBtn.addEventListener('click', closeCart);
-  if (cartBackdrop) cartBackdrop.addEventListener('click', closeCart);
-
-  // --- Generic WhatsApp-bound links ([data-wa-text]) ---
+  // --- Plain WhatsApp links (Join, Subscribe) ---
   document.querySelectorAll('[data-wa-text]').forEach(function (el) {
     el.addEventListener('click', function (e) {
       e.preventDefault();
-      window.open(waLink(el.getAttribute('data-wa-text')), '_blank', 'noopener');
+      openWhatsApp(el.getAttribute('data-wa-text'));
     });
   });
 
@@ -223,28 +204,25 @@
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       if (!form.reportValidity()) return;
-      var kind = form.getAttribute('data-wa-form');
       var data = {};
       Array.prototype.forEach.call(form.elements, function (el) {
         if (el.name) data[el.name] = el.value;
       });
       var text;
-      if (kind === 'appointment') {
-        text =
-          'Hi Volt & Victor, I would like to book a consultation.\n' +
+      if (form.getAttribute('data-wa-form') === 'appointment') {
+        text = 'Hi Volt & Victor, I would like to book a consultation.\n' +
           'Name: ' + data.name + '\n' +
           'Phone: ' + data.phone + '\n' +
           'Preferred time: ' + data.when + '\n' +
           (data.details ? 'Project: ' + data.details : '');
       } else {
-        text =
-          'Hi Volt & Victor, I would like to start a project.\n' +
+        text = 'Hi Volt & Victor, I would like to start a project.\n' +
           'Name: ' + data.name + '\n' +
           'Phone: ' + data.phone + '\n' +
           'Type: ' + (data.type || '') + '\n' +
           'Requirements: ' + (data.details || '');
       }
-      window.open(waLink(text), '_blank', 'noopener');
+      openWhatsApp(text);
     });
   });
 })();
