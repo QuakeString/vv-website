@@ -95,6 +95,23 @@
       <label style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:.85rem">
         <input type="checkbox" id="banner-enabled" style="width:auto"> Show this banner on the site
       </label>
+      <label for="banner-festival" style="display:flex; flex-direction:column; gap:6px; font-weight:600; font-size:.85rem">Festival theme
+        <select id="banner-festival">
+          <option value="none">None</option>
+          <option value="durga_puja">Durga Puja</option>
+          <option value="kali_puja">Kali Puja</option>
+          <option value="saraswati_puja">Saraswati Puja</option>
+          <option value="poila_boishakh">Poila Boishakh</option>
+          <option value="diwali">Diwali</option>
+          <option value="holi">Holi</option>
+          <option value="eid">Eid</option>
+          <option value="christmas">Christmas</option>
+          <option value="new_year">New Year</option>
+          <option value="independence_day">Independence Day</option>
+          <option value="republic_day">Republic Day</option>
+        </select>
+      </label>
+      <p class="muted" style="font-size:.8rem; margin:0">Adds a small coloured strip with a greeting and a matching motif, separate from the banner above. Pick None to turn it off.</p>
       <div class="actions" style="justify-content:flex-start">
         <button class="btn btn-primary btn-sm" type="submit">Save banner</button>
       </div>
@@ -235,20 +252,22 @@
   var bannerForm = document.getElementById('banner-form');
   var bannerMsg = document.getElementById('banner-msg');
   var bannerEnabled = document.getElementById('banner-enabled');
+  var bannerFestival = document.getElementById('banner-festival');
   function loadBanner() {
     sb.from('site_banner').select('*').eq('id', 1).maybeSingle().then(function (res) {
       if (res.error || !res.data) return;
       bannerMsg.value = res.data.message || '';
       bannerEnabled.checked = !!res.data.enabled;
+      bannerFestival.value = res.data.festival || 'none';
     });
   }
   bannerForm.addEventListener('submit', function (e) {
     e.preventDefault();
     sb.from('site_banner')
-      .upsert({ id: 1, message: bannerMsg.value.trim(), enabled: bannerEnabled.checked })
+      .upsert({ id: 1, message: bannerMsg.value.trim(), enabled: bannerEnabled.checked, festival: bannerFestival.value })
       .then(function (res) {
-        if (res.error) { toast('Could not save the banner: ' + res.error.message); return; }
-        toast(bannerEnabled.checked && bannerMsg.value.trim() ? 'Banner is live' : 'Banner saved (hidden)');
+        if (res.error) { toast('Could not save: ' + res.error.message); return; }
+        toast('Saved');
       });
   });
 

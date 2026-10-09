@@ -11,6 +11,34 @@
     window.open(waLink(text), '_blank', 'noopener');
   }
 
+  // --- Festival themes (set from the admin, "none" by default) ---
+  // Each one is just an accent pair, a greeting and a small line-art motif —
+  // the rest of the site's own colours and layout stay the same.
+  var FESTIVALS = {
+    durga_puja: { label: 'Durga Puja', greeting: 'Shubho Durga Puja!', accent: '#e2574c', accent2: '#f4b942',
+      motif: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M7 9c0-3 2-5 5-5s5 2 5 5"/><path d="M4 9h16l-1.5 11a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2z"/><path d="M9 14h6"/></svg>' },
+    kali_puja: { label: 'Kali Puja', greeting: 'Shubho Kali Puja!', accent: '#8a4fd1', accent2: '#e2574c',
+      motif: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5-6-10a6 6 0 0 1 12 0c0 5-6 10-6 10z"/><path d="M12 7v5"/></svg>' },
+    saraswati_puja: { label: 'Saraswati Puja', greeting: 'Shubho Saraswati Puja!', accent: '#f4b942', accent2: '#4f9fff',
+      motif: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18c4-10 12-10 16-14"/><circle cx="7" cy="15" r="2"/><path d="M14 8l2 2"/></svg>' },
+    poila_boishakh: { label: 'Poila Boishakh', greeting: 'Shubho Noboborsho!', accent: '#e2574c', accent2: '#19b38a',
+      motif: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></svg>' },
+    diwali: { label: 'Diwali', greeting: 'Happy Diwali!', accent: '#f4b942', accent2: '#e2574c',
+      motif: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1.5 2 1.5 4 0 5.5C10.5 7 10.5 5 12 3z"/><path d="M3 15c3-2 6-2 9 0s6 2 9 0"/><path d="M4 15v2a8 8 0 0 0 16 0v-2"/></svg>' },
+    holi: { label: 'Holi', greeting: 'Happy Holi!', accent: '#d6478c', accent2: '#4f9fff',
+      motif: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="7" cy="8" r="2.4"/><circle cx="16" cy="6" r="1.8"/><circle cx="17" cy="15" r="2.6"/><circle cx="8" cy="17" r="1.6"/></svg>' },
+    eid: { label: 'Eid', greeting: 'Eid Mubarak!', accent: '#19b38a', accent2: '#f4b942',
+      motif: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4a8 8 0 1 0 0 16 7 7 0 1 1 0-16z"/><path d="M19 8l.6 1.6L21 10l-1.4.6L19 12l-.6-1.4L17 10l1.4-.4z"/></svg>' },
+    christmas: { label: 'Christmas', greeting: 'Merry Christmas!', accent: '#1f8a53', accent2: '#d1443a',
+      motif: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l3 5h-2l3 5h-2.5l3 5H7.5l3-5H8l3-5H9z"/><path d="M12 18v3"/></svg>' },
+    new_year: { label: 'New Year', greeting: 'Happy New Year!', accent: '#4f9fff', accent2: '#f4b942',
+      motif: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/></svg>' },
+    independence_day: { label: 'Independence Day', greeting: 'Happy Independence Day!', accent: '#ff9933', accent2: '#138808',
+      motif: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v18"/><path d="M6 4h12l-2.5 3L18 10H6"/></svg>' },
+    republic_day: { label: 'Republic Day', greeting: 'Happy Republic Day!', accent: '#ff9933', accent2: '#138808',
+      motif: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><path d="M12 5v2M12 17v2M5 12h2M17 12h2M7 7l1.4 1.4M15.6 15.6L17 17M7 17l1.4-1.4M15.6 8.4L17 7"/></svg>' }
+  };
+
   // --- Colour mode: light / dark / system ---
   var THEME_KEY = 'vv-theme';
   var themeBtns = document.querySelectorAll('#theme-switch button');
@@ -167,24 +195,52 @@
       })
       .catch(function () { /* offline or blocked — the fallback list already shows */ });
 
-    // --- Sales/offer banner ---
+    // --- Sales/offer banner + festival theme (one row, one query) ---
     var bannerEl = document.getElementById('banner');
-    if (bannerEl) {
+    var festEl = document.getElementById('fest-strip');
+    if (bannerEl || festEl) {
       var BANNER_DISMISS_KEY = 'vv-banner-dismissed';
+      var FEST_DISMISS_KEY = 'vv-fest-dismissed';
       vvClient.from('site_banner').select('*').eq('id', 1).maybeSingle().then(function (res) {
-        if (res.error || !res.data || !res.data.enabled || !res.data.message) return;
-        var dismissed = false;
-        try { dismissed = sessionStorage.getItem(BANNER_DISMISS_KEY) === res.data.message; } catch (e) {}
-        if (dismissed) return;
-        document.getElementById('banner-text').textContent = res.data.message;
-        bannerEl.hidden = false;
-      }).catch(function () { /* offline or blocked — banner just stays hidden */ });
+        if (res.error || !res.data) return;
+
+        if (bannerEl && res.data.enabled && res.data.message) {
+          var bDismissed = false;
+          try { bDismissed = sessionStorage.getItem(BANNER_DISMISS_KEY) === res.data.message; } catch (e) {}
+          if (!bDismissed) {
+            document.getElementById('banner-text').textContent = res.data.message;
+            bannerEl.hidden = false;
+          }
+        }
+
+        var fest = FESTIVALS[res.data.festival];
+        if (festEl && fest) {
+          var fDismissed = false;
+          try { fDismissed = sessionStorage.getItem(FEST_DISMISS_KEY) === res.data.festival; } catch (e) {}
+          if (!fDismissed) {
+            root.style.setProperty('--fest-accent', fest.accent);
+            root.style.setProperty('--fest-accent2', fest.accent2);
+            document.getElementById('fest-motif').innerHTML = fest.motif;
+            document.getElementById('fest-text').textContent = fest.greeting;
+            festEl.hidden = false;
+          }
+        }
+      }).catch(function () { /* offline or blocked — banner and strip just stay hidden */ });
+
       var bannerClose = document.getElementById('banner-close');
       if (bannerClose) {
         bannerClose.addEventListener('click', function () {
           var msg = document.getElementById('banner-text').textContent;
           try { sessionStorage.setItem(BANNER_DISMISS_KEY, msg); } catch (e) {}
           bannerEl.hidden = true;
+        });
+      }
+      var festClose = document.getElementById('fest-close');
+      if (festClose) {
+        festClose.addEventListener('click', function () {
+          var key = Object.keys(FESTIVALS).filter(function (k) { return FESTIVALS[k].greeting === document.getElementById('fest-text').textContent; })[0];
+          try { sessionStorage.setItem(FEST_DISMISS_KEY, key || ''); } catch (e) {}
+          festEl.hidden = true;
         });
       }
     }

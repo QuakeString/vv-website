@@ -23,6 +23,15 @@ create table if not exists public.site_banner (
   updated_at timestamptz not null default now()
 );
 
+-- Which festival theme is showing, if any. "none" means off.
+alter table public.site_banner
+  add column if not exists festival text not null default 'none'
+  check (festival in (
+    'none', 'durga_puja', 'kali_puja', 'saraswati_puja', 'poila_boishakh',
+    'diwali', 'holi', 'eid', 'christmas', 'new_year',
+    'independence_day', 'republic_day'
+  ));
+
 insert into public.site_banner (id, message, enabled)
   values (1, '', false)
   on conflict (id) do nothing;
