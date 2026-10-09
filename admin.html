@@ -25,10 +25,10 @@
   :root[data-theme="dark"] .err, :root:not([data-theme="light"]) .err{color:#ff9a92}
   @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .err{color:#ff9a92}}
   .err.show{display:block}
-  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px}
-  .stat{padding:14px 16px; border:1px solid var(--border); border-radius:10px; background:var(--surface)}
-  .stat b{display:block; font-family:var(--font-head); font-size:1.5rem}
-  .stat span{font-size:.8rem; color:var(--muted)}
+  .adm-stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px}
+  .adm-stat{padding:14px 16px; border:1px solid var(--border); border-radius:10px; background:var(--surface)}
+  .adm-stat b{display:block; font-family:var(--font-head); font-size:1.5rem}
+  .adm-stat span{font-size:.8rem; color:var(--muted)}
   .bar{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
   .bar input[type=search]{flex:1 1 220px; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:var(--bg); color:var(--text)}
   .bar select{flex:0 1 190px; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:var(--bg); color:var(--text)}
@@ -81,11 +81,24 @@
   </section>
 
   <section id="view-app" class="view-app" hidden>
-    <div class="stats">
-      <div class="stat"><b id="s-total">0</b><span>Items in the shop</span></div>
-      <div class="stat"><b id="s-in">0</b><span>In stock</span></div>
-      <div class="stat"><b id="s-out">0</b><span>Out of stock</span></div>
+    <div class="adm-stats">
+      <div class="adm-stat"><b id="s-total">0</b><span>Items in the shop</span></div>
+      <div class="adm-stat"><b id="s-in">0</b><span>In stock</span></div>
+      <div class="adm-stat"><b id="s-out">0</b><span>Out of stock</span></div>
     </div>
+    <form class="admin-card banner-form" id="banner-form" style="display:flex; flex-direction:column; gap:12px">
+      <h2 style="font-size:1.05rem; font-family:var(--font-head)">Homepage banner</h2>
+      <p class="muted" style="font-size:.85rem; margin:0">Shows as a strip at the very top of the site. Leave it off until you have a sale or offer to announce.</p>
+      <label for="banner-msg" style="display:flex; flex-direction:column; gap:6px; font-weight:600; font-size:.85rem">Message
+        <input id="banner-msg" placeholder="e.g. Diwali offer: 10% off all kits this week" maxlength="140">
+      </label>
+      <label style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:.85rem">
+        <input type="checkbox" id="banner-enabled" style="width:auto"> Show this banner on the site
+      </label>
+      <div class="actions" style="justify-content:flex-start">
+        <button class="btn btn-primary btn-sm" type="submit">Save banner</button>
+      </div>
+    </form>
     <div class="bar">
       <input type="search" id="q" placeholder="Search components" aria-label="Search components">
       <select id="cat" aria-label="Filter by category">
@@ -135,6 +148,10 @@
       <select id="f-icon"></select>
     </label>
     <label for="f-unit">Unit note<input id="f-unit" placeholder="e.g. 1 channel, 5 V"></label>
+    <div class="row2">
+      <label for="f-tag">Sale/offer tag (optional)<input id="f-tag" placeholder="e.g. Sale, -20%" maxlength="24"></label>
+      <label for="f-was">Original price (optional)<input id="f-was" type="number" min="0" step="1" placeholder="Shown struck through"></label>
+    </div>
     <label for="f-stock">Availability
       <select id="f-stock"><option value="in">In stock</option><option value="out">Out of stock</option></select>
     </label>
@@ -206,11 +223,33 @@
       viewApp.hidden = false;
       signoutBtn.hidden = false;
       loadItems();
+      loadBanner();
     } else {
       viewLogin.hidden = false;
       viewApp.hidden = true;
       signoutBtn.hidden = true;
     }
+  });
+
+  // --- Homepage banner ---
+  var bannerForm = document.getElementById('banner-form');
+  var bannerMsg = document.getElementById('banner-msg');
+  var bannerEnabled = document.getElementById('banner-enabled');
+  function loadBanner() {
+    sb.from('site_banner').select('*').eq('id', 1).maybeSingle().then(function (res) {
+      if (res.error || !res.data) return;
+      bannerMsg.value = res.data.message || '';
+      bannerEnabled.checked = !!res.data.enabled;
+    });
+  }
+  bannerForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    sb.from('site_banner')
+      .upsert({ id: 1, message: bannerMsg.value.trim(), enabled: bannerEnabled.checked })
+      .then(function (res) {
+        if (res.error) { toast('Could not save the banner: ' + res.error.message); return; }
+        toast(bannerEnabled.checked && bannerMsg.value.trim() ? 'Banner is live' : 'Banner saved (hidden)');
+      });
   });
 
   // --- Load + render ---
@@ -305,6 +344,8 @@
     document.getElementById('f-price').value = it ? it.price : '';
     document.getElementById('f-icon').value = it ? it.icon : ICONS[0];
     document.getElementById('f-unit').value = it ? (it.unit || '') : '';
+    document.getElementById('f-tag').value = it ? (it.sale_tag || '') : '';
+    document.getElementById('f-was').value = it && it.original_price ? it.original_price : '';
     document.getElementById('f-stock').value = !it || it.in_stock ? 'in' : 'out';
     scrim.hidden = false;
     document.getElementById('f-name').focus();
@@ -323,6 +364,8 @@
       price: Number(document.getElementById('f-price').value),
       icon: document.getElementById('f-icon').value,
       unit: document.getElementById('f-unit').value.trim(),
+      sale_tag: document.getElementById('f-tag').value.trim() || null,
+      original_price: document.getElementById('f-was').value ? Number(document.getElementById('f-was').value) : null,
       in_stock: document.getElementById('f-stock').value === 'in'
     };
     var saveBtn = document.getElementById('save-btn');

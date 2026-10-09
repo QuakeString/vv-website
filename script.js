@@ -131,15 +131,19 @@
     art.setAttribute('data-name', p.name);
     if (!p.in_stock) art.setAttribute('data-out', 'true');
     var priceText = '₹' + Number(p.price).toLocaleString('en-IN');
+    var wasText = (p.original_price && Number(p.original_price) > Number(p.price))
+      ? '<span class="price-was">₹' + Number(p.original_price).toLocaleString('en-IN') + '</span>' : '';
     art.innerHTML =
       '<svg class="picon" viewBox="0 0 64 64" aria-hidden="true"><use href="#' + p.icon + '"/></svg>' +
+      (p.sale_tag ? '<span class="sale-tag"></span>' : '') +
       '<h4></h4>' +
-      '<p class="p">' + priceText + ' <span class="pu"></span></p>' +
+      '<p class="p">' + wasText + priceText + ' <span class="pu"></span></p>' +
       '<p class="pnote">' + (p.in_stock ? 'Price not fixed, can be reduced' : 'Currently out of stock') + '</p>' +
       '<button class="btn btn-ghost btn-sm" type="button"' + (p.in_stock ? '' : ' disabled') + '>' +
       (p.in_stock ? 'Add to cart' : 'Out of stock') + '</button>';
     art.querySelector('h4').textContent = p.name;
     art.querySelector('.pu').textContent = p.unit || '';
+    if (p.sale_tag) art.querySelector('.sale-tag').textContent = p.sale_tag;
     var btn = art.querySelector('button');
     if (p.in_stock) btn.setAttribute('data-add', p.name);
     return art;
@@ -162,6 +166,28 @@
         renderProducts(res.data);
       })
       .catch(function () { /* offline or blocked — the fallback list already shows */ });
+
+    // --- Sales/offer banner ---
+    var bannerEl = document.getElementById('banner');
+    if (bannerEl) {
+      var BANNER_DISMISS_KEY = 'vv-banner-dismissed';
+      vvClient.from('site_banner').select('*').eq('id', 1).maybeSingle().then(function (res) {
+        if (res.error || !res.data || !res.data.enabled || !res.data.message) return;
+        var dismissed = false;
+        try { dismissed = sessionStorage.getItem(BANNER_DISMISS_KEY) === res.data.message; } catch (e) {}
+        if (dismissed) return;
+        document.getElementById('banner-text').textContent = res.data.message;
+        bannerEl.hidden = false;
+      }).catch(function () { /* offline or blocked — banner just stays hidden */ });
+      var bannerClose = document.getElementById('banner-close');
+      if (bannerClose) {
+        bannerClose.addEventListener('click', function () {
+          var msg = document.getElementById('banner-text').textContent;
+          try { sessionStorage.setItem(BANNER_DISMISS_KEY, msg); } catch (e) {}
+          bannerEl.hidden = true;
+        });
+      }
+    }
   }
 
   // --- Cart drawer ---
