@@ -64,6 +64,7 @@
 <div class="admin-wrap">
   <header class="admin-top">
     <a class="brand" href="index.html"><img src="assets/favicon.svg" alt=""> Volt &amp; Victor admin</a>
+    <span class="muted" id="who" style="font-size:.82rem" hidden></span>
     <button class="btn btn-ghost btn-sm" id="signout" type="button" hidden>Sign out</button>
   </header>
 
@@ -254,6 +255,9 @@
       viewLogin.hidden = true;
       viewApp.hidden = false;
       signoutBtn.hidden = false;
+      var who = document.getElementById('who');
+      who.textContent = 'Signed in as ' + ((session.user && session.user.email) || 'admin');
+      who.hidden = false;
       loadItems();
       loadBanner();
       loadSocial();
@@ -261,6 +265,7 @@
       viewLogin.hidden = false;
       viewApp.hidden = true;
       signoutBtn.hidden = true;
+      document.getElementById('who').hidden = true;
     }
   });
 
@@ -290,6 +295,14 @@
     return m + hint;
   }
   function saveSettings(patch) {
+    return sb.auth.getSession().then(function (r) {
+      if (!r.data || !r.data.session) {
+        throw new Error('You are not signed in, so the database refuses changes. Sign out, sign in again, then save.');
+      }
+      return saveSettingsSignedIn(patch);
+    });
+  }
+  function saveSettingsSignedIn(patch) {
     return sb.from('site_banner').update(patch).eq('id', 1).select().then(function (res) {
       if (res.error) throw res.error;
       if (res.data && res.data.length) return res;

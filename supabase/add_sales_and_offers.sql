@@ -77,7 +77,21 @@ create policy "Signed-in users can update the banner"
   using (true)
   with check (true);
 
+drop policy if exists "Signed-in users can delete the banner" on public.site_banner;
+create policy "Signed-in users can delete the banner"
+  on public.site_banner for delete
+  to authenticated
+  using (true);
+
 drop trigger if exists site_banner_touch_updated_at on public.site_banner;
 create trigger site_banner_touch_updated_at
   before update on public.site_banner
   for each row execute function public.touch_updated_at();
+
+-- Make sure the roles are allowed to touch the table at all.
+grant select on public.site_banner to anon, authenticated;
+grant insert, update, delete on public.site_banner to authenticated;
+
+-- Check: this should list 4 policies and one row with id 1.
+select policyname, cmd, roles from pg_policies where tablename = 'site_banner' order by cmd;
+select id, enabled, festival from public.site_banner;
