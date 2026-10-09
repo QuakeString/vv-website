@@ -1,21 +1,30 @@
--- Volt & Victor — adds sales/offer tags and the homepage banner.
--- Safe to run after schema.sql: it only adds columns and a new table, and
--- does not touch your existing products.
+-- Volt & Victor — sale/offer tags, homepage banner, festival theme and
+-- social links.
+-- Safe to run any number of times, and safe to run on top of any earlier
+-- version of this file or of schema.sql: it only adds what is missing and
+-- never deletes your shop items.
 -- Paste this whole file into Supabase: SQL Editor > New query > Run.
 
--- A short tag on a product card, e.g. "Sale", "Offer", "-20%". Leave blank
--- for a normal item.
+-- Helper that stamps updated_at on every edit (also created by schema.sql).
+create or replace function public.touch_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+-- A short tag on a product card, e.g. "Sale", "Offer", "-20%".
 alter table public.products
   add column if not exists sale_tag text;
 
 -- The original price, shown struck through next to the current price.
--- Leave blank unless you're discounting the item.
 alter table public.products
-  add column if not exists original_price numeric check (original_price is null or original_price >= 0);
+  add column if not exists original_price numeric
+  check (original_price is null or original_price >= 0);
 
--- The strip at the very top of the homepage, for a site-wide sale or
--- announcement. One row only. Starts off (enabled = false), so nothing
--- shows until you turn it on from the admin page.
+-- Site-wide settings, one row only: the banner strip, the festival theme
+-- and the social links. Starts off, so nothing shows until you turn it on.
 create table if not exists public.site_banner (
   id smallint primary key default 1 check (id = 1),
   message text not null default '',
@@ -23,7 +32,6 @@ create table if not exists public.site_banner (
   updated_at timestamptz not null default now()
 );
 
--- Which festival theme is showing, if any. "none" means off.
 alter table public.site_banner
   add column if not exists festival text not null default 'none'
   check (festival in (
@@ -32,25 +40,35 @@ alter table public.site_banner
     'independence_day', 'republic_day'
   ));
 
--- Social links shown in the footer and contact section. Leave blank to
--- hide that icon. Must be a full https:// link when set.
 alter table public.site_banner
   add column if not exists instagram_url text
   check (instagram_url is null or instagram_url = '' or instagram_url like 'https://%');
+
 alter table public.site_banner
   add column if not exists facebook_url text
   check (facebook_url is null or facebook_url = '' or facebook_url like 'https://%');
 
+-- The one settings row the admin page edits.
 insert into public.site_banner (id, message, enabled)
   values (1, '', false)
   on conflict (id) do nothing;
 
 alter table public.site_banner enable row level security;
 
+-- Everyone can read the settings (the website needs them).
 drop policy if exists "Banner is publicly readable" on public.site_banner;
 create policy "Banner is publicly readable"
   on public.site_banner for select
   using (true);
+
+-- Only a signed-in admin can change them. The insert policy matters even
+-- though the row already exists: saving from the admin page can attempt an
+-- insert first, and without this policy that save is refused.
+drop policy if exists "Signed-in users can insert the banner" on public.site_banner;
+create policy "Signed-in users can insert the banner"
+  on public.site_banner for insert
+  to authenticated
+  with check (true);
 
 drop policy if exists "Signed-in users can update the banner" on public.site_banner;
 create policy "Signed-in users can update the banner"

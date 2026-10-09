@@ -88,6 +88,7 @@
     </div>
     <form class="admin-card banner-form" id="banner-form" style="display:flex; flex-direction:column; gap:12px">
       <h2 style="font-size:1.05rem; font-family:var(--font-head)">Homepage banner</h2>
+      <p class="err" id="banner-err"></p>
       <p class="muted" style="font-size:.85rem; margin:0">Shows as a strip at the very top of the site. Leave it off until you have a sale or offer to announce.</p>
       <label for="banner-msg" style="display:flex; flex-direction:column; gap:6px; font-weight:600; font-size:.85rem">Message
         <input id="banner-msg" placeholder="e.g. Diwali offer: 10% off all kits this week" maxlength="140">
@@ -276,13 +277,38 @@
       bannerFestival.value = res.data.festival || 'none';
     });
   }
+  // Saves the settings row. Updates it; if it is missing, creates it.
+  // Errors are shown in full with a plain hint, never swallowed.
+  function explainError(err) {
+    var m = (err && err.message) ? err.message : String(err);
+    var hint = '';
+    if (/schema cache|does not exist|could not find|column/i.test(m)) {
+      hint = ' The database is missing something. Run the latest add_sales_and_offers.sql in Supabase (SQL Editor), then reload this page.';
+    } else if (/row-level security|permission denied|policy/i.test(m)) {
+      hint = ' The database refused the change. Make sure you are signed in, and run the latest add_sales_and_offers.sql in Supabase.';
+    }
+    return m + hint;
+  }
+  function saveSettings(patch) {
+    return sb.from('site_banner').update(patch).eq('id', 1).select().then(function (res) {
+      if (res.error) throw res.error;
+      if (res.data && res.data.length) return res;
+      return sb.from('site_banner').insert(Object.assign({ id: 1 }, patch)).select().then(function (r) {
+        if (r.error) throw r.error;
+        return r;
+      });
+    });
+  }
+
+  var bannerErr = document.getElementById('banner-err');
   bannerForm.addEventListener('submit', function (e) {
     e.preventDefault();
-    sb.from('site_banner')
-      .upsert({ id: 1, message: bannerMsg.value.trim(), enabled: bannerEnabled.checked, festival: bannerFestival.value })
-      .then(function (res) {
-        if (res.error) { toast('Could not save: ' + res.error.message); return; }
-        toast('Saved');
+    bannerErr.classList.remove('show');
+    saveSettings({ message: bannerMsg.value.trim(), enabled: bannerEnabled.checked, festival: bannerFestival.value })
+      .then(function () { toast('Saved'); })
+      .catch(function (err) {
+        bannerErr.textContent = 'Could not save: ' + explainError(err);
+        bannerErr.classList.add('show');
       });
   });
 
@@ -309,11 +335,11 @@
       socialErr.classList.add('show');
       return;
     }
-    sb.from('site_banner')
-      .upsert({ id: 1, instagram_url: ig || null, facebook_url: fb || null })
-      .then(function (res) {
-        if (res.error) { toast('Could not save: ' + res.error.message); return; }
-        toast('Saved');
+    saveSettings({ instagram_url: ig || null, facebook_url: fb || null })
+      .then(function () { toast('Saved'); })
+      .catch(function (err) {
+        socialErr.textContent = 'Could not save: ' + explainError(err);
+        socialErr.classList.add('show');
       });
   });
 
