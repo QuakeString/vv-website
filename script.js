@@ -104,15 +104,65 @@
   }
 
   // --- Shop filter ---
+  // The shop starts with the products already in index.html (so the page
+  // works even if Supabase is unreachable), then tries to replace them with
+  // the live list from Supabase so admin changes show up without a redeploy.
   var sChips = document.querySelectorAll('[data-sfilter]');
-  var prods = document.querySelectorAll('.product');
+  var productsEl = document.getElementById('products');
+
+  function applyShopFilter() {
+    var active = document.querySelector('[data-sfilter][aria-pressed="true"]');
+    var f = active ? active.getAttribute('data-sfilter') : 'all';
+    productsEl.querySelectorAll('.product').forEach(function (p) {
+      p.hidden = !(f === 'all' || p.getAttribute('data-scat') === f);
+    });
+  }
   sChips.forEach(function (chip) {
     chip.addEventListener('click', function () {
-      var f = chip.getAttribute('data-sfilter');
       sChips.forEach(function (c) { c.setAttribute('aria-pressed', c === chip ? 'true' : 'false'); });
-      prods.forEach(function (p) { p.hidden = !(f === 'all' || p.getAttribute('data-scat') === f); });
+      applyShopFilter();
     });
   });
+
+  function productCard(p) {
+    var art = document.createElement('article');
+    art.className = 'product';
+    art.setAttribute('data-scat', p.category);
+    art.setAttribute('data-name', p.name);
+    if (!p.in_stock) art.setAttribute('data-out', 'true');
+    var priceText = '₹' + Number(p.price).toLocaleString('en-IN');
+    art.innerHTML =
+      '<svg class="picon" viewBox="0 0 64 64" aria-hidden="true"><use href="#' + p.icon + '"/></svg>' +
+      '<h4></h4>' +
+      '<p class="p">' + priceText + ' <span class="pu"></span></p>' +
+      '<p class="pnote">' + (p.in_stock ? 'Price not fixed, can be reduced' : 'Currently out of stock') + '</p>' +
+      '<button class="btn btn-ghost btn-sm" type="button"' + (p.in_stock ? '' : ' disabled') + '>' +
+      (p.in_stock ? 'Add to cart' : 'Out of stock') + '</button>';
+    art.querySelector('h4').textContent = p.name;
+    art.querySelector('.pu').textContent = p.unit || '';
+    var btn = art.querySelector('button');
+    if (p.in_stock) btn.setAttribute('data-add', p.name);
+    return art;
+  }
+
+  function renderProducts(list) {
+    productsEl.innerHTML = '';
+    list.forEach(function (p) { productsEl.appendChild(productCard(p)); });
+    applyShopFilter();
+  }
+
+  if (window.supabase && window.VV_SUPABASE_URL && window.VV_SUPABASE_ANON_KEY) {
+    var vvClient = window.supabase.createClient(window.VV_SUPABASE_URL, window.VV_SUPABASE_ANON_KEY);
+    vvClient
+      .from('products')
+      .select('*')
+      .order('sort_order', { ascending: true })
+      .then(function (res) {
+        if (res.error || !res.data || !res.data.length) return; // keep the page's own fallback list
+        renderProducts(res.data);
+      })
+      .catch(function () { /* offline or blocked — the fallback list already shows */ });
+  }
 
   // --- Cart drawer ---
   var CART_KEY = 'vv-cart';
@@ -163,14 +213,14 @@
   document.getElementById('cart-open').addEventListener('click', openCart);
   document.getElementById('cart-close').addEventListener('click', closeCart);
   backdrop.addEventListener('click', closeCart);
-  document.querySelectorAll('[data-add]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var n = btn.getAttribute('data-add');
-      cart[n] = (cart[n] || 0) + 1;
-      saveCart();
-      renderCart();
-      openCart();
-    });
+  productsEl.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-add]');
+    if (!btn) return;
+    var n = btn.getAttribute('data-add');
+    cart[n] = (cart[n] || 0) + 1;
+    saveCart();
+    renderCart();
+    openCart();
   });
   document.getElementById('cart-clear').addEventListener('click', function () {
     cart = {};

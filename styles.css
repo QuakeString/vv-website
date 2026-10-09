@@ -210,6 +210,9 @@ img{max-width:100%; display:block}
 .product h4{margin:0; font-size:.95rem}
 .product .p{font-weight:700; color:var(--accent); margin:0}
 .product .btn{align-self:flex-start}
+.product[data-out]{opacity:.6}
+.product[data-out] .pnote{color:var(--muted)}
+.product .btn[disabled]{opacity:.6; cursor:not-allowed}
 
 .gallery{display:grid; grid-template-columns:repeat(3,1fr); gap:16px}
 @media (max-width:700px){.gallery{grid-template-columns:repeat(2,1fr)}}

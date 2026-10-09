@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shop admin | Volt &amp; Victor</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+  body{min-height:100vh}
+  .admin-wrap{max-width:1040px; margin-inline:auto; padding:32px 20px 64px; display:flex; flex-direction:column; gap:20px}
+  .admin-top{display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between}
+  .admin-top .brand{display:flex; gap:10px; align-items:center; font-family:var(--font-head); font-weight:700; font-size:1.1rem}
+  .admin-top .brand img{width:30px; height:30px}
+  .view-app:not([hidden]){display:flex; flex-direction:column; gap:20px}
+  .admin-card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:22px}
+  .admin-login{max-width:380px; margin-inline:auto; width:100%; display:flex; flex-direction:column; gap:16px; margin-top:48px}
+  .admin-login label{display:flex; flex-direction:column; gap:6px; font-weight:600; font-size:.85rem}
+  .admin-login input, .modal input, .modal select{font:inherit; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:var(--bg); color:var(--text); width:100%}
+  .err{font-size:.85rem; padding:10px 12px; border-radius:10px; background:color-mix(in srgb, #e5484d 16%, var(--bg)); color:#c81e1e; display:none}
+  :root[data-theme="dark"] .err, :root:not([data-theme="light"]) .err{color:#ff9a92}
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .err{color:#ff9a92}}
+  .err.show{display:block}
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px}
+  .stat{padding:14px 16px; border:1px solid var(--border); border-radius:10px; background:var(--surface)}
+  .stat b{display:block; font-family:var(--font-head); font-size:1.5rem}
+  .stat span{font-size:.8rem; color:var(--muted)}
+  .bar{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+  .bar input[type=search]{flex:1 1 220px; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:var(--bg); color:var(--text)}
+  .bar select{flex:0 1 190px; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:var(--bg); color:var(--text)}
+  .tablewrap{overflow-x:auto; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface)}
+  table{width:100%; border-collapse:collapse; min-width:640px}
+  th,td{padding:12px 14px; text-align:left; border-bottom:1px solid var(--border); vertical-align:middle}
+  th{font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); background:var(--bg-alt)}
+  tr:last-child td{border-bottom:0}
+  td.num,th.num{text-align:right; font-variant-numeric:tabular-nums}
+  .item{font-weight:600}
+  .item small{display:block; font-weight:400; color:var(--muted); font-size:.8rem}
+  .pill{display:inline-block; font-size:.74rem; font-weight:600; padding:3px 10px; border-radius:999px}
+  .pill.in{background:color-mix(in srgb, var(--accent) 18%, var(--bg)); color:var(--accent)}
+  .pill.out{background:color-mix(in srgb, #e5484d 16%, var(--bg)); color:#c81e1e}
+  :root[data-theme="dark"] .pill.out, :root:not([data-theme="light"]) .pill.out{color:#ff9a92}
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .pill.out{color:#ff9a92}}
+  .actions{display:flex; gap:6px; justify-content:flex-end; flex-wrap:wrap}
+  .btn-sm{padding:6px 12px; font-size:.8rem}
+  .btn-danger{color:#c81e1e}
+  :root[data-theme="dark"] .btn-danger, :root:not([data-theme="light"]) .btn-danger{color:#ff9a92}
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn-danger{color:#ff9a92}}
+  .toast{position:fixed; left:50%; bottom:20px; transform:translateX(-50%); background:var(--text); color:var(--bg); padding:10px 18px; border-radius:999px; font-weight:600; font-size:.85rem; box-shadow:var(--shadow); z-index:9}
+  .scrim{position:fixed; inset:0; background:rgba(0,0,0,.5); place-items:center; padding:16px; z-index:8}
+  .scrim:not([hidden]){display:grid}
+  .modal{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px; width:100%; max-width:420px; display:flex; flex-direction:column; gap:14px; max-height:100%; overflow:auto}
+  .modal label{display:flex; flex-direction:column; gap:6px; font-weight:600; font-size:.85rem}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+  .muted-row{text-align:center; padding:28px; color:var(--muted)}
+  @media (max-width:520px){.row2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="admin-wrap">
+  <header class="admin-top">
+    <a class="brand" href="index.html"><img src="assets/favicon.svg" alt=""> Volt &amp; Victor admin</a>
+    <button class="btn btn-ghost btn-sm" id="signout" type="button" hidden>Sign out</button>
+  </header>
+
+  <section id="view-login">
+    <form class="admin-card admin-login" id="login-form">
+      <div>
+        <h1 style="font-size:1.25rem; font-family:var(--font-head)">Sign in</h1>
+        <p class="muted" style="margin-top:4px">Only the Volt &amp; Victor team can open this page.</p>
+      </div>
+      <p class="err" id="login-err"></p>
+      <label for="email">Email<input id="email" type="email" required autocomplete="username"></label>
+      <label for="password">Password<input id="password" type="password" required autocomplete="current-password"></label>
+      <button class="btn btn-primary" type="submit" id="login-btn">Sign in</button>
+    </form>
+  </section>
+
+  <section id="view-app" class="view-app" hidden>
+    <div class="stats">
+      <div class="stat"><b id="s-total">0</b><span>Items in the shop</span></div>
+      <div class="stat"><b id="s-in">0</b><span>In stock</span></div>
+      <div class="stat"><b id="s-out">0</b><span>Out of stock</span></div>
+    </div>
+    <div class="bar">
+      <input type="search" id="q" placeholder="Search components" aria-label="Search components">
+      <select id="cat" aria-label="Filter by category">
+        <option value="all">All categories</option>
+        <option value="tools">Tools</option>
+        <option value="boards">Boards &amp; modules</option>
+        <option value="sensors">Sensors</option>
+        <option value="motors">Motors</option>
+        <option value="audio">Audio</option>
+        <option value="kits">Kits</option>
+        <option value="power">Power</option>
+        <option value="parts">Components</option>
+      </select>
+      <button class="btn btn-primary" id="add" type="button">+ Add item</button>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Item</th><th>Category</th><th class="num">Price (₹)</th><th>Stock</th><th class="num">Actions</th></tr></thead>
+        <tbody id="rows"><tr><td colspan="5" class="muted-row">Loading…</td></tr></tbody>
+      </table>
+    </div>
+    <p class="muted" style="font-size:.85rem">Changes here appear on the website for every visitor within a few seconds — no redeploy needed.</p>
+  </section>
+</div>
+
+<div class="scrim" id="scrim" hidden>
+  <form class="modal" id="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-title">
+    <h2 id="dlg-title" style="font-size:1.15rem; font-family:var(--font-head)">Edit item</h2>
+    <p class="err" id="form-err"></p>
+    <label for="f-name">Item name<input id="f-name" required></label>
+    <div class="row2">
+      <label for="f-cat">Category
+        <select id="f-cat">
+          <option value="tools">Tools</option>
+          <option value="boards">Boards &amp; modules</option>
+          <option value="sensors">Sensors</option>
+          <option value="motors">Motors</option>
+          <option value="audio">Audio</option>
+          <option value="kits">Kits</option>
+          <option value="power">Power</option>
+          <option value="parts">Components</option>
+        </select>
+      </label>
+      <label for="f-price">Price (₹)<input id="f-price" type="number" min="0" step="1" required></label>
+    </div>
+    <label for="f-icon">Icon
+      <select id="f-icon"></select>
+    </label>
+    <label for="f-unit">Unit note<input id="f-unit" placeholder="e.g. 1 channel, 5 V"></label>
+    <label for="f-stock">Availability
+      <select id="f-stock"><option value="in">In stock</option><option value="out">Out of stock</option></select>
+    </label>
+    <div class="actions" style="justify-content:flex-end; margin-top:4px">
+      <button class="btn btn-sm" type="button" id="cancel">Cancel</button>
+      <button class="btn btn-primary btn-sm" type="submit" id="save-btn">Save</button>
+    </div>
+  </form>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="supabase-config.js"></script>
+<script>
+(function () {
+  'use strict';
+  var ICONS = ['c-resistor','c-capacitor','c-led','c-transistor','c-chip','c-battery','c-buzzer','c-motor','c-wire',
+    'c-multimeter','c-solder','c-dronemotor','c-uno','c-ultrasonic','c-servo','c-dcmotor','c-speaker','c-kit',
+    'c-breadboard','c-esp32','c-pi','c-relay','c-lcd','c-pot','c-button','c-pir','c-dht','c-ldr','c-copper','c-solar'];
+  var fIcon = document.getElementById('f-icon');
+  ICONS.forEach(function (id) { fIcon.add(new Option(id.replace('c-', ''), id)); });
+
+  if (!window.supabase || !window.VV_SUPABASE_URL || !window.VV_SUPABASE_ANON_KEY) {
+    document.getElementById('login-err').textContent = 'Could not load the database connection. Check your internet connection and reload.';
+    document.getElementById('login-err').classList.add('show');
+    document.getElementById('login-btn').disabled = true;
+    return;
+  }
+  var sb = window.supabase.createClient(window.VV_SUPABASE_URL, window.VV_SUPABASE_ANON_KEY);
+
+  var viewLogin = document.getElementById('view-login');
+  var viewApp = document.getElementById('view-app');
+  var signoutBtn = document.getElementById('signout');
+  var items = [];
+
+  function fmt(n) { return Number(n).toLocaleString('en-IN'); }
+  var toastEl = document.getElementById('toast'), toastT;
+  function toast(msg) {
+    toastEl.textContent = msg; toastEl.hidden = false;
+    clearTimeout(toastT); toastT = setTimeout(function () { toastEl.hidden = true; }, 2400);
+  }
+
+  // --- Auth ---
+  var loginForm = document.getElementById('login-form');
+  var loginErr = document.getElementById('login-err');
+  loginForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    loginErr.classList.remove('show');
+    document.getElementById('login-btn').disabled = true;
+    sb.auth.signInWithPassword({
+      email: document.getElementById('email').value.trim(),
+      password: document.getElementById('password').value
+    }).then(function (res) {
+      document.getElementById('login-btn').disabled = false;
+      if (res.error) {
+        loginErr.textContent = res.error.message === 'Invalid login credentials'
+          ? 'Wrong email or password.' : res.error.message;
+        loginErr.classList.add('show');
+      }
+      // onAuthStateChange below handles showing the app.
+    });
+  });
+  signoutBtn.addEventListener('click', function () { sb.auth.signOut(); });
+
+  sb.auth.onAuthStateChange(function (event, session) {
+    if (session) {
+      viewLogin.hidden = true;
+      viewApp.hidden = false;
+      signoutBtn.hidden = false;
+      loadItems();
+    } else {
+      viewLogin.hidden = false;
+      viewApp.hidden = true;
+      signoutBtn.hidden = true;
+    }
+  });
+
+  // --- Load + render ---
+  var rows = document.getElementById('rows');
+  var q = document.getElementById('q');
+  var cat = document.getElementById('cat');
+
+  function loadItems() {
+    rows.innerHTML = '<tr><td colspan="5" class="muted-row">Loading…</td></tr>';
+    sb.from('products').select('*').order('sort_order', { ascending: true }).then(function (res) {
+      if (res.error) {
+        rows.innerHTML = '<tr><td colspan="5" class="muted-row">Could not load the shop: ' + res.error.message + '</td></tr>';
+        return;
+      }
+      items = res.data || [];
+      render();
+    });
+  }
+
+  function render() {
+    var term = q.value.trim().toLowerCase();
+    var filtered = items.filter(function (it) {
+      if (cat.value !== 'all' && it.category !== cat.value) return false;
+      if (term && (it.name + ' ' + (it.unit || '')).toLowerCase().indexOf(term) < 0) return false;
+      return true;
+    });
+    rows.innerHTML = '';
+    if (!filtered.length) {
+      rows.innerHTML = '<tr><td colspan="5" class="muted-row">No items match. Try another search or add the item.</td></tr>';
+    }
+    filtered.forEach(function (it) {
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td><div class="item"></div></td><td class="muted"></td><td class="num"></td><td></td><td><div class="actions"></div></td>';
+      var d = tr.querySelector('.item');
+      d.textContent = it.name;
+      var sm = document.createElement('small'); sm.textContent = it.unit || ''; d.appendChild(sm);
+      tr.children[1].textContent = catLabel(it.category);
+      tr.children[2].textContent = '₹' + fmt(it.price);
+      var pill = document.createElement('span');
+      pill.className = 'pill ' + (it.in_stock ? 'in' : 'out');
+      pill.textContent = it.in_stock ? 'In stock' : 'Out of stock';
+      tr.children[3].appendChild(pill);
+      var act = tr.querySelector('.actions');
+      mkBtn(act, it.in_stock ? 'Mark out' : 'Mark in', '', function () { toggleStock(it); });
+      mkBtn(act, 'Edit', '', function () { openDlg(it); });
+      mkBtn(act, 'Delete', 'btn-danger', function () { removeItem(it); });
+      rows.appendChild(tr);
+    });
+    document.getElementById('s-total').textContent = items.length;
+    var inN = items.filter(function (x) { return x.in_stock; }).length;
+    document.getElementById('s-in').textContent = inN;
+    document.getElementById('s-out').textContent = items.length - inN;
+  }
+  function mkBtn(parent, label, cls, fn) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn btn-sm ' + cls; b.textContent = label;
+    b.addEventListener('click', fn); parent.appendChild(b);
+  }
+  function catLabel(c) {
+    return { tools: 'Tools', boards: 'Boards & modules', sensors: 'Sensors', motors: 'Motors',
+      audio: 'Audio', kits: 'Kits', power: 'Power', parts: 'Components' }[c] || c;
+  }
+  q.addEventListener('input', render);
+  cat.addEventListener('change', render);
+
+  function toggleStock(it) {
+    sb.from('products').update({ in_stock: !it.in_stock }).eq('id', it.id).then(function (res) {
+      if (res.error) { toast('Could not update: ' + res.error.message); return; }
+      it.in_stock = !it.in_stock; render();
+      toast(it.name + ' is now ' + (it.in_stock ? 'in stock' : 'out of stock'));
+    });
+  }
+  function removeItem(it) {
+    sb.from('products').delete().eq('id', it.id).then(function (res) {
+      if (res.error) { toast('Could not delete: ' + res.error.message); return; }
+      items = items.filter(function (x) { return x.id !== it.id; });
+      render(); toast(it.name + ' removed');
+    });
+  }
+
+  // --- Add / edit dialog ---
+  var scrim = document.getElementById('scrim');
+  var dlg = document.getElementById('dlg');
+  var formErr = document.getElementById('form-err');
+  var editing = null;
+  function openDlg(it) {
+    editing = it || null;
+    formErr.classList.remove('show');
+    document.getElementById('dlg-title').textContent = it ? 'Edit item' : 'Add item';
+    document.getElementById('f-name').value = it ? it.name : '';
+    document.getElementById('f-cat').value = it ? it.category : 'tools';
+    document.getElementById('f-price').value = it ? it.price : '';
+    document.getElementById('f-icon').value = it ? it.icon : ICONS[0];
+    document.getElementById('f-unit').value = it ? (it.unit || '') : '';
+    document.getElementById('f-stock').value = !it || it.in_stock ? 'in' : 'out';
+    scrim.hidden = false;
+    document.getElementById('f-name').focus();
+  }
+  function closeDlg() { scrim.hidden = true; }
+  document.getElementById('add').addEventListener('click', function () { openDlg(null); });
+  document.getElementById('cancel').addEventListener('click', closeDlg);
+  scrim.addEventListener('click', function (e) { if (e.target === scrim) closeDlg(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !scrim.hidden) closeDlg(); });
+
+  dlg.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var data = {
+      name: document.getElementById('f-name').value.trim(),
+      category: document.getElementById('f-cat').value,
+      price: Number(document.getElementById('f-price').value),
+      icon: document.getElementById('f-icon').value,
+      unit: document.getElementById('f-unit').value.trim(),
+      in_stock: document.getElementById('f-stock').value === 'in'
+    };
+    var saveBtn = document.getElementById('save-btn');
+    saveBtn.disabled = true;
+    var req = editing
+      ? sb.from('products').update(data).eq('id', editing.id)
+      : sb.from('products').insert(Object.assign({ sort_order: items.length }, data));
+    req.then(function (res) {
+      saveBtn.disabled = false;
+      if (res.error) {
+        formErr.textContent = res.error.message;
+        formErr.classList.add('show');
+        return;
+      }
+      closeDlg();
+      toast(data.name + ' saved');
+      loadItems();
+    });
+  });
+})();
+</script>
+</body>
+</html>
