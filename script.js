@@ -39,6 +39,12 @@
       motif: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><path d="M12 5v2M12 17v2M5 12h2M17 12h2M7 7l1.4 1.4M15.6 15.6L17 17M7 17l1.4-1.4M15.6 8.4L17 7"/></svg>' }
   };
 
+  // --- Social links (Instagram / Facebook), set from the admin ---
+  var SOCIAL_ICONS = {
+    instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1" fill="currentColor" stroke="none"/></svg>',
+    facebook: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>'
+  };
+
   // --- Colour mode: light / dark / system ---
   var THEME_KEY = 'vv-theme';
   var themeBtns = document.querySelectorAll('#theme-switch button');
@@ -195,10 +201,11 @@
       })
       .catch(function () { /* offline or blocked — the fallback list already shows */ });
 
-    // --- Sales/offer banner + festival theme (one row, one query) ---
+    // --- Site settings: sales/offer banner, festival theme, social links (one row, one query) ---
     var bannerEl = document.getElementById('banner');
     var festEl = document.getElementById('fest-strip');
-    if (bannerEl || festEl) {
+    var socialSlots = document.querySelectorAll('.social-row');
+    if (bannerEl || festEl || socialSlots.length) {
       var BANNER_DISMISS_KEY = 'vv-banner-dismissed';
       var FEST_DISMISS_KEY = 'vv-fest-dismissed';
       vvClient.from('site_banner').select('*').eq('id', 1).maybeSingle().then(function (res) {
@@ -225,7 +232,30 @@
             festEl.hidden = false;
           }
         }
-      }).catch(function () { /* offline or blocked — banner and strip just stay hidden */ });
+
+        if (socialSlots.length && (res.data.instagram_url || res.data.facebook_url)) {
+          var icons = [];
+          if (res.data.instagram_url) {
+            icons.push({ href: res.data.instagram_url, label: 'Instagram', svg: SOCIAL_ICONS.instagram });
+          }
+          if (res.data.facebook_url) {
+            icons.push({ href: res.data.facebook_url, label: 'Facebook', svg: SOCIAL_ICONS.facebook });
+          }
+          socialSlots.forEach(function (slot) {
+            var links = slot.querySelector('.social-links');
+            icons.forEach(function (ic) {
+              var a = document.createElement('a');
+              a.href = ic.href;
+              a.target = '_blank';
+              a.rel = 'noopener';
+              a.setAttribute('aria-label', ic.label);
+              a.innerHTML = ic.svg;
+              links.appendChild(a);
+            });
+            slot.hidden = false;
+          });
+        }
+      }).catch(function () { /* offline or blocked — banner, strip and social links just stay hidden */ });
 
       var bannerClose = document.getElementById('banner-close');
       if (bannerClose) {

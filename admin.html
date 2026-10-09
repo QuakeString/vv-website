@@ -116,6 +116,20 @@
         <button class="btn btn-primary btn-sm" type="submit">Save banner</button>
       </div>
     </form>
+    <form class="admin-card" id="social-form" style="display:flex; flex-direction:column; gap:12px">
+      <h2 style="font-size:1.05rem; font-family:var(--font-head)">Social links</h2>
+      <p class="muted" style="font-size:.85rem; margin:0">Shown as icons in the footer and contact section. Leave a field blank to hide that icon.</p>
+      <p class="err" id="social-err"></p>
+      <label for="social-instagram" style="display:flex; flex-direction:column; gap:6px; font-weight:600; font-size:.85rem">Instagram URL
+        <input id="social-instagram" type="url" placeholder="https://instagram.com/yourpage">
+      </label>
+      <label for="social-facebook" style="display:flex; flex-direction:column; gap:6px; font-weight:600; font-size:.85rem">Facebook URL
+        <input id="social-facebook" type="url" placeholder="https://facebook.com/yourpage">
+      </label>
+      <div class="actions" style="justify-content:flex-start">
+        <button class="btn btn-primary btn-sm" type="submit">Save social links</button>
+      </div>
+    </form>
     <div class="bar">
       <input type="search" id="q" placeholder="Search components" aria-label="Search components">
       <select id="cat" aria-label="Filter by category">
@@ -241,6 +255,7 @@
       signoutBtn.hidden = false;
       loadItems();
       loadBanner();
+      loadSocial();
     } else {
       viewLogin.hidden = false;
       viewApp.hidden = true;
@@ -265,6 +280,37 @@
     e.preventDefault();
     sb.from('site_banner')
       .upsert({ id: 1, message: bannerMsg.value.trim(), enabled: bannerEnabled.checked, festival: bannerFestival.value })
+      .then(function (res) {
+        if (res.error) { toast('Could not save: ' + res.error.message); return; }
+        toast('Saved');
+      });
+  });
+
+  // --- Social links ---
+  var socialForm = document.getElementById('social-form');
+  var socialInstagram = document.getElementById('social-instagram');
+  var socialFacebook = document.getElementById('social-facebook');
+  var socialErr = document.getElementById('social-err');
+  function loadSocial() {
+    sb.from('site_banner').select('*').eq('id', 1).maybeSingle().then(function (res) {
+      if (res.error || !res.data) return;
+      socialInstagram.value = res.data.instagram_url || '';
+      socialFacebook.value = res.data.facebook_url || '';
+    });
+  }
+  function validUrl(v) { return v === '' || /^https:\/\//.test(v); }
+  socialForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    socialErr.classList.remove('show');
+    var ig = socialInstagram.value.trim();
+    var fb = socialFacebook.value.trim();
+    if (!validUrl(ig) || !validUrl(fb)) {
+      socialErr.textContent = 'Links must start with https:// — leave a field blank to hide that icon.';
+      socialErr.classList.add('show');
+      return;
+    }
+    sb.from('site_banner')
+      .upsert({ id: 1, instagram_url: ig || null, facebook_url: fb || null })
       .then(function (res) {
         if (res.error) { toast('Could not save: ' + res.error.message); return; }
         toast('Saved');

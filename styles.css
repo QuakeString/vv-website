@@ -386,3 +386,11 @@ img{max-width:100%; display:block}
 .fest-close{position:absolute; right:16px; top:50%; transform:translateY(-50%); background:none; border:0; color:var(--muted); font-size:1rem; line-height:1; cursor:pointer; padding:4px}
 .fest-close:hover{color:var(--text)}
 @media (max-width:560px){.fest-inner{padding:9px 44px 9px 16px; justify-content:flex-start}}
+
+/* ---- Social links (Instagram / Facebook) ---- */
+.social-row{display:flex; align-items:center; gap:10px; margin-top:14px}
+.social-label{font-size:.82rem; font-weight:600; color:var(--muted)}
+.social-links{display:flex; gap:8px}
+.social-links a{display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; background:var(--surface); border:1px solid var(--border); color:var(--text)}
+.social-links a:hover{color:var(--accent); border-color:var(--accent)}
+.social-links svg{width:17px; height:17px}

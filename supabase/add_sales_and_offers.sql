@@ -32,6 +32,15 @@ alter table public.site_banner
     'independence_day', 'republic_day'
   ));
 
+-- Social links shown in the footer and contact section. Leave blank to
+-- hide that icon. Must be a full https:// link when set.
+alter table public.site_banner
+  add column if not exists instagram_url text
+  check (instagram_url is null or instagram_url = '' or instagram_url like 'https://%');
+alter table public.site_banner
+  add column if not exists facebook_url text
+  check (facebook_url is null or facebook_url = '' or facebook_url like 'https://%');
+
 insert into public.site_banner (id, message, enabled)
   values (1, '', false)
   on conflict (id) do nothing;
