@@ -55,6 +55,10 @@
   .scrim:not([hidden]){display:grid}
   .modal{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px; width:100%; max-width:420px; display:flex; flex-direction:column; gap:14px; max-height:100%; overflow:auto}
   .modal label{display:flex; flex-direction:column; gap:6px; font-weight:600; font-size:.85rem}
+  .offerbox{border:1px dashed var(--accent); border-radius:10px; padding:10px 12px; margin:6px 0 10px}
+  .tagbtn{font:inherit; font-size:.78rem; font-weight:600; padding:3px 10px; border-radius:999px; border:1px dashed var(--border); background:transparent; color:var(--muted); cursor:pointer}
+  .tagbtn.has{border:1px solid var(--accent); background:color-mix(in srgb, var(--accent) 16%, var(--bg)); color:var(--accent)}
+  .ver{font-size:.72rem; color:var(--muted); border:1px solid var(--border); border-radius:999px; padding:2px 8px}
   .row2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
   .muted-row{text-align:center; padding:28px; color:var(--muted)}
   @media (max-width:520px){.row2{grid-template-columns:1fr}}
@@ -64,6 +68,7 @@
 <div class="admin-wrap">
   <header class="admin-top">
     <a class="brand" href="index.html"><img src="assets/favicon.svg" alt=""> Volt &amp; Victor admin</a>
+    <span class="ver">Admin v6 · offers, themes, social</span>
     <span class="muted" id="who" style="font-size:.82rem" hidden></span>
     <button class="btn btn-ghost btn-sm" id="signout" type="button" hidden>Sign out</button>
   </header>
@@ -149,8 +154,8 @@
     </div>
     <div class="tablewrap">
       <table>
-        <thead><tr><th>Item</th><th>Category</th><th class="num">Price (₹)</th><th>Stock</th><th class="num">Actions</th></tr></thead>
-        <tbody id="rows"><tr><td colspan="5" class="muted-row">Loading…</td></tr></tbody>
+        <thead><tr><th>Item</th><th>Category</th><th class="num">Price (₹)</th><th>Offer tag</th><th>Stock</th><th class="num">Actions</th></tr></thead>
+        <tbody id="rows"><tr><td colspan="6" class="muted-row">Loading…</td></tr></tbody>
       </table>
     </div>
     <p class="muted" style="font-size:.85rem">Changes here appear on the website for every visitor within a few seconds — no redeploy needed.</p>
@@ -181,10 +186,11 @@
       <select id="f-icon"></select>
     </label>
     <label for="f-unit">Unit note<input id="f-unit" placeholder="e.g. 1 channel, 5 V"></label>
+    <div class="offerbox"><strong>Sale / offer</strong> <span class="muted">(optional, shows on the shop card)</span>
     <div class="row2">
       <label for="f-tag">Sale/offer tag (optional)<input id="f-tag" placeholder="e.g. Sale, -20%" maxlength="24"></label>
       <label for="f-was">Original price (optional)<input id="f-was" type="number" min="0" step="1" placeholder="Shown struck through"></label>
-    </div>
+    </div></div>
     <label for="f-stock">Availability
       <select id="f-stock"><option value="in">In stock</option><option value="out">Out of stock</option></select>
     </label>
@@ -362,10 +368,10 @@
   var cat = document.getElementById('cat');
 
   function loadItems() {
-    rows.innerHTML = '<tr><td colspan="5" class="muted-row">Loading…</td></tr>';
+    rows.innerHTML = '<tr><td colspan="6" class="muted-row">Loading…</td></tr>';
     sb.from('products').select('*').order('sort_order', { ascending: true }).then(function (res) {
       if (res.error) {
-        rows.innerHTML = '<tr><td colspan="5" class="muted-row">Could not load the shop: ' + res.error.message + '</td></tr>';
+        rows.innerHTML = '<tr><td colspan="6" class="muted-row">Could not load the shop: ' + res.error.message + '</td></tr>';
         return;
       }
       items = res.data || [];
@@ -382,16 +388,25 @@
     });
     rows.innerHTML = '';
     if (!filtered.length) {
-      rows.innerHTML = '<tr><td colspan="5" class="muted-row">No items match. Try another search or add the item.</td></tr>';
+      rows.innerHTML = '<tr><td colspan="6" class="muted-row">No items match. Try another search or add the item.</td></tr>';
     }
     filtered.forEach(function (it) {
       var tr = document.createElement('tr');
-      tr.innerHTML = '<td><div class="item"></div></td><td class="muted"></td><td class="num"></td><td></td><td><div class="actions"></div></td>';
+      tr.innerHTML = '<td><div class="item"></div></td><td class="muted"></td><td class="num"></td><td class="tagcell"></td><td></td><td><div class="actions"></div></td>';
       var d = tr.querySelector('.item');
       d.textContent = it.name;
       var sm = document.createElement('small'); sm.textContent = it.unit || ''; d.appendChild(sm);
       tr.children[1].textContent = catLabel(it.category);
       tr.children[2].textContent = '₹' + fmt(it.price);
+      var tc = tr.querySelector('.tagcell');
+      var tb = document.createElement('button');
+      tb.type = 'button';
+      tb.className = 'tagbtn' + (it.sale_tag ? ' has' : '');
+      tb.textContent = it.sale_tag ? it.sale_tag : '+ Add tag';
+      tb.title = 'Click to set or clear the sale/offer tag';
+      tb.addEventListener('click', function () { quickTag(it); });
+      tc.appendChild(tb);
+      if (it.original_price) { var ow = document.createElement('small'); ow.className = 'muted'; ow.textContent = ' was ₹' + fmt(it.original_price); tc.appendChild(ow); }
       var pill = document.createElement('span');
       pill.className = 'pill ' + (it.in_stock ? 'in' : 'out');
       pill.textContent = it.in_stock ? 'In stock' : 'Out of stock';
@@ -419,6 +434,16 @@
   q.addEventListener('input', render);
   cat.addEventListener('change', render);
 
+  function quickTag(it) {
+    var v = window.prompt('Sale/offer tag for "' + it.name + '" (e.g. Sale, -20%). Leave empty to remove the tag.', it.sale_tag || '');
+    if (v === null) return;
+    v = v.trim().slice(0, 24);
+    sb.from('products').update({ sale_tag: v || null }).eq('id', it.id).then(function (res) {
+      if (res.error) { toast('Could not update: ' + explainError(res.error)); return; }
+      it.sale_tag = v || null; render();
+      toast(v ? 'Tag "' + v + '" set on ' + it.name : 'Tag removed from ' + it.name);
+    });
+  }
   function toggleStock(it) {
     sb.from('products').update({ in_stock: !it.in_stock }).eq('id', it.id).then(function (res) {
       if (res.error) { toast('Could not update: ' + res.error.message); return; }
