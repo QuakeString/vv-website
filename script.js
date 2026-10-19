@@ -361,6 +361,12 @@
     });
   });
 
+  function prettyWhen(v) {
+    var d = new Date(v);
+    if (!v || isNaN(d.getTime())) return v;
+    return d.toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+  }
+
   // --- Forms -> WhatsApp ---
   document.querySelectorAll('form[data-wa-form]').forEach(function (form) {
     form.addEventListener('submit', function (e) {
@@ -375,7 +381,7 @@
         text = 'Hi Volt & Victor, I would like to book a consultation.\n' +
           'Name: ' + data.name + '\n' +
           'Phone: ' + data.phone + '\n' +
-          'Preferred time: ' + data.when + '\n' +
+          'Preferred time: ' + prettyWhen(data.when) + '\n' +
           (data.details ? 'Project: ' + data.details : '');
       } else {
         text = 'Hi Volt & Victor, I would like to start a project.\n' +
