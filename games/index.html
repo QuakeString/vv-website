@@ -93,6 +93,38 @@ button.ghost{background:var(--bg);color:var(--fg)}
 .die.roll{animation:shake .12s infinite}
 @keyframes shake{50%{transform:rotate(12deg) scale(1.05)}}
 @media (prefers-reduced-motion:reduce){.die.roll{animation:none}}
+
+/* Quiz */
+.qz .chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:700 14px var(--display);padding:7px 12px;border-radius:999px;background:var(--bg);color:var(--fg);box-shadow:none;border:3px solid transparent}
+.chip.on{border-color:var(--gold)}
+.nmgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.nmgrid .seat{padding:6px 8px}
+.nmgrid input{font-size:16px;padding:6px;border-width:2px}
+.qcenter{text-align:center;align-items:center}
+.bigdot{width:84px;height:84px;border-radius:50%;color:#fff;font:700 44px/84px var(--display);box-shadow:0 5px 0 var(--shadow)}
+.qhead{display:flex;justify-content:space-between;gap:8px;font:700 14px var(--display);color:var(--muted)}
+.qhead .who{font-size:16px}
+.qtimer{position:relative;height:22px;border-radius:999px;background:var(--bg);overflow:hidden}
+.qtimer i{display:block;height:100%;width:100%;background:var(--green)}
+.qtimer.low i{background:var(--red)}
+.qtimer em{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 14px var(--display);font-style:normal;color:var(--fg)}
+.qcat{align-self:flex-start;font-size:12px;font-weight:800;border-radius:999px;padding:3px 10px;background:var(--bg)}
+.qtext{font-family:var(--display);font-size:clamp(20px,5.5vw,28px);margin:0;line-height:1.2}
+.qopts{display:grid;grid-template-columns:1fr;gap:8px}
+.qopt{text-align:left;font:700 17px var(--body);background:var(--bg);color:var(--fg);padding:12px 14px;border:3px solid var(--cellline);box-shadow:none}
+.qopt b{display:inline-block;width:1.6em;color:var(--muted)}
+.qopt.good b,.qopt.bad b{color:inherit}
+.qopt.good{background:var(--green);color:#fff;border-color:var(--green);opacity:1}
+.qopt.bad{background:var(--red);color:#fff;border-color:var(--red);opacity:1}
+.qopt:disabled:not(.good):not(.bad){opacity:.55}
+.qfb{min-height:1.4em;text-align:center;font-weight:800}
+.qfb.ok{color:var(--green)}.qfb.no{color:var(--red)}
+.qwin{text-align:center;font:700 22px var(--display)!important;color:var(--fg)!important}
+.board{display:flex;flex-direction:column;gap:6px}
+.board .seat span{font-size:15px}
+.board .rk{flex:none;width:1.4em;font-size:18px}
+@media (min-width:560px){.qopts{grid-template-columns:1fr 1fr}}
 body{margin:0}
 </style>
 </head>
@@ -814,6 +846,286 @@ const LUDO='<svg viewBox="0 0 120 84" aria-hidden="true"><rect x="22" y="2" widt
 GAMES.push({id:'turbo-duel',title:'Turbo Duel',blurb:'Two cars, one road. Dodge traffic, grab boosts, reach the flag first.',players:'2 players, one screen',art:CAR,accent:'#f0476b',mount:mountRace});
 GAMES.push({id:'ludo',title:'Ludo',blurb:'The classic dice race. Play with friends, or against the computer.',players:'2 to 22 players, or online with up to 4',art:LUDO,accent:'#2bb673',mount:mountLudoEntry});
 GAMES.push({id:'snakes',title:'Snakes and Ladders',blurb:'Climb the ladders, dodge the snakes, be first to 100.',players:'2 to 22 players, one phone',art:SNK,accent:'#f5b400',mount:mountSnakes});
+/* ---------- Quiz ---------- */
+const QBANK={
+'General knowledge':{icon:'💡',q:[
+['How many days are there in a leap year?','366','365','364','367'],
+['Which colour do you get by mixing blue and yellow?','Green','Purple','Orange','Brown'],
+['How many continents are there?','7','5','6','8'],
+['Which planet is often called the "evening star" because it shines so brightly after sunset?','Venus','Mars','Neptune','Mercury'],
+['How many strings does a standard guitar have?','6','4','5','8'],
+['Which language has the most native speakers in the world?','Mandarin Chinese','English','Spanish','Hindi'],
+['What do bees make?','Honey','Milk','Silk','Wax paper'],
+['How many sides does a hexagon have?','6','5','7','8'],
+['Which meal is eaten first in the day?','Breakfast','Lunch','Dinner','Supper'],
+['What is the main ingredient of bread?','Flour','Rice','Sugar','Butter'],
+['In which direction does the sun rise?','East','West','North','South'],
+['How many hours are there in a day?','24','12','48','36'],
+['What is frozen water called?','Ice','Steam','Fog','Dew'],
+['Which animal is known as the "ship of the desert"?','Camel','Horse','Elephant','Donkey'],
+['How many letters are in the English alphabet?','26','24','25','28'],
+['Which instrument has black and white keys?','Piano','Violin','Flute','Drum'],
+['What is the name of the toy that you fly on a string in the wind?','Kite','Yo-yo','Top','Balloon'],
+['How many minutes are there in one hour?','60','100','30','90']]},
+'Science':{icon:'🔬',q:[
+['What gas do plants take in from the air?','Carbon dioxide','Oxygen','Nitrogen','Helium'],
+['What is the chemical symbol for water?','H2O','CO2','O2','NaCl'],
+['Which planet is closest to the Sun?','Mercury','Venus','Earth','Mars'],
+['What force pulls objects towards the Earth?','Gravity','Magnetism','Friction','Static'],
+['How many bones does an adult human have?','206','150','300','412'],
+['Which organ pumps blood around the body?','Heart','Lungs','Liver','Kidney'],
+['What is the hardest natural substance?','Diamond','Gold','Iron','Quartz'],
+['At what temperature does water boil at sea level?','100 °C','50 °C','90 °C','212 °C'],
+['Which part of the plant makes food using sunlight?','Leaf','Root','Stem','Seed'],
+['What is the centre of an atom called?','Nucleus','Cell','Orbit','Shell'],
+['Which planet is known as the Red Planet?','Mars','Jupiter','Saturn','Mercury'],
+['What do we call animals that eat only plants?','Herbivores','Carnivores','Omnivores','Insectivores'],
+['Sound cannot travel through which of these?','A vacuum','Water','Air','Steel'],
+['What is the closest star to Earth?','The Sun','Sirius','Polaris','Proxima Centauri'],
+['Which gas do humans need to breathe to live?','Oxygen','Hydrogen','Carbon dioxide','Argon'],
+['What is the process of a caterpillar turning into a butterfly called?','Metamorphosis','Migration','Hibernation','Evaporation'],
+['Which metal is liquid at room temperature?','Mercury','Lead','Tin','Copper'],
+['How many colours are in a rainbow?','7','5','6','9']]},
+'Sports':{icon:'⚽',q:[
+['How many players are on the field for one football (soccer) team?','11','9','10','12'],
+['In which sport would you score a "goal" with a puck?','Ice hockey','Tennis','Golf','Cricket'],
+['How many rings are on the Olympic flag?','5','4','6','7'],
+['Which sport is played at Wimbledon?','Tennis','Cricket','Golf','Badminton'],
+['In cricket, how many balls are in one over?','6','4','8','10'],
+['What is the maximum score from a single throw of three darts?','180','100','150','201'],
+['How many players are on the court for one basketball team?','5','6','7','4'],
+['In which sport do you use a shuttlecock?','Badminton','Squash','Table tennis','Hockey'],
+['How often are the Summer Olympic Games held?','Every 4 years','Every 2 years','Every 3 years','Every 5 years'],
+['What colour card does a referee show to send a footballer off?','Red','Yellow','Green','Blue'],
+['How many points is a touchdown worth in American football (before the extra kick)?','6','3','7','5'],
+['In which sport do players try to hit a ball into a hole with a club?','Golf','Polo','Baseball','Rugby'],
+['How many stumps are there in a cricket wicket?','3','2','4','5'],
+['A marathon is about how many kilometres?','42','26','21','50'],
+['In swimming, which stroke is done on your back?','Backstroke','Butterfly','Freestyle','Breaststroke'],
+['Which country hosted the 2016 Summer Olympics?','Brazil','China','Greece','Japan'],
+['In ten-pin bowling, what is it called when you knock down all pins with your first ball?','Strike','Spare','Split','Gutter'],
+['How long is one half of a standard football match?','45 minutes','30 minutes','60 minutes','40 minutes']]},
+'Maths':{icon:'➗',q:[
+['What is 7 × 8?','56','54','63','48'],
+['What is 15 + 27?','42','32','43','41'],
+['What is half of 90?','45','40','35','50'],
+['How many degrees are in a right angle?','90','45','180','60'],
+['What is the square root of 81?','9','8','7','11'],
+['What is 100 ÷ 4?','25','20','40','50'],
+['How many sides does a triangle have?','3','4','5','2'],
+['What is 12 × 12?','144','124','122','154'],
+['Which of these is a prime number?','13','15','21','27'],
+['What is 1000 − 357?','643','653','743','633'],
+['How many degrees are in a full circle?','360','180','270','90'],
+['What is 3 squared plus 4 squared?','25','49','14','12'],
+['What is 20% of 50?','10','5','20','25'],
+['Which number is the next in the pattern 2, 4, 8, 16?','32','24','30','20'],
+['What is the sum of the angles in a triangle?','180°','90°','360°','270°'],
+['What is 9 × 9?','81','72','99','91'],
+['How many zeros are in one million?','6','5','7','9'],
+['What is 2 to the power of 5?','32','10','25','64']]},
+'Geography':{icon:'🌍',q:[
+['What is the capital of France?','Paris','Lyon','Marseille','Nice'],
+['Which is the largest ocean on Earth?','Pacific','Atlantic','Indian','Arctic'],
+['On which continent is Egypt?','Africa','Asia','Europe','South America'],
+['What is the capital of Japan?','Tokyo','Osaka','Kyoto','Seoul'],
+['Which is the longest river in Africa?','The Nile','The Congo','The Niger','The Zambezi'],
+['What is the capital of Australia?','Canberra','Sydney','Melbourne','Perth'],
+['Mount Everest is part of which mountain range?','The Himalayas','The Alps','The Andes','The Rockies'],
+['Which country has the most people living in it (as of the mid 2020s)?','India','USA','Indonesia','Brazil'],
+['What is the capital of Canada?','Ottawa','Toronto','Vancouver','Montreal'],
+['Which is the smallest continent by land area?','Australia (Oceania)','Europe','Antarctica','South America'],
+['Which desert is the largest hot desert in the world?','The Sahara','The Gobi','The Kalahari','The Thar'],
+['What is the capital of Italy?','Rome','Milan','Venice','Naples'],
+['The Amazon rainforest is mainly in which country?','Brazil','Peru','Mexico','India'],
+['Which sea lies between Europe and Africa?','The Mediterranean','The Red Sea','The Baltic','The Caspian'],
+['What is the capital of Bangladesh?','Dhaka','Chittagong','Sylhet','Khulna'],
+['Which country is shaped like a boot?','Italy','Spain','Greece','Portugal'],
+['Which river flows through London?','The Thames','The Seine','The Danube','The Rhine'],
+['What is the capital of Egypt?','Cairo','Alexandria','Luxor','Giza']]},
+'History':{icon:'🏛️',q:[
+['Which ancient civilisation built the pyramids of Giza?','Egyptians','Romans','Greeks','Aztecs'],
+['In which century did the first moon landing happen?','20th','19th','18th','21st'],
+['Who was the first person to walk on the Moon?','Neil Armstrong','Buzz Aldrin','Yuri Gagarin','Alan Shepard'],
+['Which wall was built to protect northern China?','The Great Wall','Hadrian\'s Wall','The Berlin Wall','The Wailing Wall'],
+['The Roman Empire was centred around which modern-day capital city?','Rome','Athens','Cairo','Paris'],
+['Who painted the Mona Lisa?','Leonardo da Vinci','Michelangelo','Picasso','Van Gogh'],
+['Which ship sank on its first voyage in 1912?','The Titanic','The Mayflower','The Endeavour','The Victory'],
+['Who was the first President of the United States?','George Washington','Abraham Lincoln','Thomas Jefferson','John Adams'],
+['In which year did the Second World War end?','1945','1939','1918','1950'],
+['Which explorer is credited with reaching the Americas in 1492?','Christopher Columbus','Marco Polo','Vasco da Gama','Ferdinand Magellan'],
+['Which ancient people built Machu Picchu?','The Incas','The Mayans','The Aztecs','The Vikings'],
+['Who was the leader of the Indian independence movement known as "Mahatma"?','Mohandas Gandhi','Jawaharlal Nehru','Subhas Bose','Sardar Patel'],
+['Which invention by Johannes Gutenberg changed how books were made?','The printing press','The telescope','The steam engine','The compass'],
+['The ancient Olympic Games began in which country?','Greece','Italy','Egypt','Turkey'],
+['Which queen ruled Britain for 63 years until 1901?','Queen Victoria','Queen Elizabeth I','Queen Anne','Queen Mary'],
+['What were the people who sailed from Scandinavia in longships called?','Vikings','Normans','Saxons','Celts'],
+['Bangladesh became an independent country in which year?','1971','1947','1952','1990'],
+['Which wall fell in 1989, reuniting a divided city?','The Berlin Wall','The Great Wall','Hadrian\'s Wall','The Western Wall']]},
+'Animals & nature':{icon:'🦁',q:[
+['What is the fastest land animal?','Cheetah','Lion','Horse','Leopard'],
+['What is the largest animal in the world?','Blue whale','African elephant','Giraffe','Great white shark'],
+['How many legs does a spider have?','8','6','10','4'],
+['Which bird is famous for being unable to fly and living in Antarctica?','Penguin','Ostrich','Kiwi','Emu'],
+['What do pandas mainly eat?','Bamboo','Fish','Berries','Grass'],
+['A baby kangaroo is called a…','Joey','Cub','Pup','Kit'],
+['Which animal has a long trunk?','Elephant','Rhino','Hippo','Giraffe'],
+['Which is the tallest animal?','Giraffe','Elephant','Camel','Ostrich'],
+['What do caterpillars turn into?','Butterflies or moths','Beetles','Dragonflies','Bees'],
+['Which tree produces acorns?','Oak','Pine','Maple','Willow'],
+['How many hearts does an octopus have?','3','1','2','8'],
+['Which mammal can truly fly?','Bat','Flying squirrel','Sugar glider','Penguin'],
+['What is a group of lions called?','A pride','A pack','A herd','A flock'],
+['Which animal sleeps hanging upside down?','Bat','Owl','Monkey','Parrot'],
+['Which is the largest big cat?','Tiger','Lion','Jaguar','Leopard'],
+['Which insect makes a honeycomb?','Bee','Ant','Beetle','Moth'],
+['Which ocean animal has eight arms and can squirt ink?','Octopus','Jellyfish','Starfish','Seahorse'],
+['Which is the national animal of Bangladesh?','Royal Bengal tiger','Elephant','Lion','Peacock']]},
+'Tech & games':{icon:'🎮',q:[
+['What does "www" stand for in a web address?','World Wide Web','Wide World Web','Web World Wide','World Web Window'],
+['Which company makes the PlayStation?','Sony','Nintendo','Microsoft','Sega'],
+['What do you call a small picture file format that can be animated and loops?','GIF','PDF','MP3','DOC'],
+['In Minecraft, which mob explodes when it gets close to you?','Creeper','Zombie','Skeleton','Spider'],
+['What is the brain of a computer called?','CPU','Mouse','Monitor','Keyboard'],
+['Which plumber is the hero of a famous Nintendo game series?','Mario','Sonic','Link','Pikachu'],
+['What does "USB" stand for?','Universal Serial Bus','United Standard Box','Ultra Speed Byte','Universal System Board'],
+['Which of these is a web browser?','Firefox','Excel','Photoshop','Notepad'],
+['What is the name of the blue hedgehog in a classic video game series?','Sonic','Knuckles','Tails','Shadow'],
+['How many bits are in a byte?','8','4','16','10'],
+['Which key do you press to make a capital letter?','Shift','Tab','Ctrl','Esc'],
+['What shape are the blocks in the game Tetris called?','Tetrominoes','Pentagons','Hexagons','Cuboids'],
+['Which word means a computer program you use, like a game or calculator?','App','Port','Cable','Router'],
+['What does "Wi-Fi" let a device do?','Connect to the internet wirelessly','Charge faster','Print photos','Cool the CPU'],
+['In chess, which piece moves in an L shape?','Knight','Bishop','Rook','Pawn'],
+['What is the name of the game with a ghost-chasing yellow circle that eats dots?','Pac-Man','Space Invaders','Pong','Donkey Kong'],
+['Which gaming creature is the mascot of Pokémon?','Pikachu','Charmander','Bulbasaur','Eevee'],
+['What does "AI" stand for?','Artificial Intelligence','Automatic Internet','Active Input','Advanced Icon']]}
+};
+
+function mountQuiz(root){
+  const cleanups=[];let dead=false;const timers=new Set();
+  const on=(t,e,f)=>{t.addEventListener(e,f);cleanups.push(()=>t.removeEventListener(e,f))};
+  const later=(f,ms)=>{const id=setTimeout(()=>{timers.delete(id);if(!dead)f()},ms);timers.add(id)};
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+  const colour=i=>'hsl('+Math.round((i*137.5)%360)+',68%,50%)';
+  const CATS=Object.keys(QBANK),ALL='Mixed';
+  const SEC=15,MAXP=22,LS='gamehub-quiz-v1';
+  let cat=ALL,mode='solo',people=2,count=10,names=[],best=0;
+  try{best=+localStorage.getItem(LS)||0}catch(e){}
+  let qs=[],scores=[],right=[],pi=0,qi=0,left=SEC,tick=null,locked=false,t0=0;
+
+  const box=document.createElement('div');box.className='lu qz';root.appendChild(box);
+  const nameOf=i=>names[i]||(mode==='solo'?'You':'Player '+(i+1));
+  const stop=()=>{if(tick){clearInterval(tick);timers.delete(tick);tick=null}};
+
+  function setup(){
+    stop();
+    const chips=[ALL].concat(CATS).map(c=>'<button class="chip'+(c===cat?' on':'')+'" data-c="'+esc(c)+'">'+(c===ALL?'🎲':QBANK[c].icon)+' '+esc(c)+'</button>').join('');
+    box.innerHTML=`<div class="lu-setup">
+      <h1>Quiz Time</h1><p>Pick a topic, then answer before the clock runs out. Faster answers score more.</p>
+      <div class="chips" id="qc">${chips}</div>
+      <div class="seat"><b>Mode</b><span class="mini"><button class="${mode==='solo'?'':'ghost'}" id="qsolo">Solo</button><button class="${mode==='pass'?'':'ghost'}" id="qpass">Pass the phone</button></span></div>
+      <div class="seat" id="qprow" ${mode==='solo'?'hidden':''}><b>Players</b><span class="mini"><button id="qpm" aria-label="Fewer players">&minus;</button><em id="qpc">${people}</em><button id="qpp" aria-label="More players">+</button></span></div>
+      <div class="seat"><b>Questions each</b><span class="mini"><button id="qnm" aria-label="Fewer questions">&minus;</button><em id="qnc">${count}</em><button id="qnp" aria-label="More questions">+</button></span></div>
+      <div id="qnames" ${mode==='solo'?'hidden':''}></div>
+      <p style="text-align:center">${best?'Best solo score: '+best:''}</p>
+      <button id="qgo">Start quiz</button></div>`;
+    const q=id=>box.querySelector('#'+id);
+    const names_=()=>{const w=q('qnames');if(mode==='solo'){w.innerHTML='';return}
+      let h='<div class="nmgrid">';for(let i=0;i<people;i++)h+='<label class="seat"><i style="background:'+colour(i)+'"></i><input maxlength="12" data-i="'+i+'" placeholder="Player '+(i+1)+'" value="'+esc(names[i]||'')+'" autocomplete="off"></label>';
+      w.innerHTML=h+'</div>';
+      w.querySelectorAll('input').forEach(inp=>inp.addEventListener('input',()=>{names[+inp.dataset.i]=inp.value.trim()}));};
+    names_();
+    on(q('qc'),'click',e=>{const b=e.target.closest('.chip');if(!b)return;cat=b.dataset.c;q('qc').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b))});
+    const setMode=m=>{mode=m;setup()};
+    on(q('qsolo'),'click',()=>setMode('solo'));on(q('qpass'),'click',()=>setMode('pass'));
+    on(q('qpm'),'click',()=>{people=Math.max(2,people-1);q('qpc').textContent=people;names_()});
+    on(q('qpp'),'click',()=>{people=Math.min(MAXP,people+1);q('qpc').textContent=people;names_()});
+    on(q('qnm'),'click',()=>{count=Math.max(5,count-5);q('qnc').textContent=count});
+    on(q('qnp'),'click',()=>{count=Math.min(30,count+5);q('qnc').textContent=count});
+    on(q('qgo'),'click',start);
+  }
+
+  function start(){
+    const pool=[];
+    (cat===ALL?CATS:[cat]).forEach(c=>QBANK[c].q.forEach(r=>pool.push({c,t:r[0],a:r[1],o:r.slice(1)})));
+    qs=shuffle(pool).slice(0,Math.min(count,pool.length));
+    const n=mode==='solo'?1:people;
+    scores=Array(n).fill(0);right=Array(n).fill(0);pi=0;qi=0;
+    mode==='solo'?ask():handoff();
+  }
+
+  function handoff(){
+    stop();
+    box.innerHTML=`<div class="lu-setup qcenter"><div class="bigdot" style="background:${colour(pi)}">${pi+1}</div>
+      <h1>${esc(nameOf(pi))}, you're up</h1><p>Pass the phone. ${qs.length} questions, ${SEC} seconds each. No peeking at the others' turns.</p>
+      <button id="qready">I'm ready</button></div>`;
+    on(box.querySelector('#qready'),'click',ask);
+  }
+
+  function ask(){
+    stop();locked=false;left=SEC;t0=Date.now();
+    const q=qs[qi],opts=shuffle(q.o);
+    box.innerHTML=`<div class="lu-setup qplay">
+      <div class="qhead"><span class="who" style="color:${colour(pi)}">${esc(nameOf(pi))}</span><span>Question ${qi+1} of ${qs.length}</span><span>Score ${scores[pi]}</span></div>
+      <div class="qtimer"><i id="qbar"></i><em id="qleft">${SEC}</em></div>
+      <span class="qcat">${QBANK[q.c].icon} ${esc(q.c)}</span>
+      <h2 class="qtext">${esc(q.t)}</h2>
+      <div class="qopts">${opts.map((o,i)=>'<button class="qopt" data-v="'+esc(o)+'"><b>'+'ABCD'[i]+'</b> '+esc(o)+'</button>').join('')}</div>
+      <p id="qfb" class="qfb" aria-live="polite"></p></div>`;
+    const bar=box.querySelector('#qbar'),lt=box.querySelector('#qleft');
+    tick=setInterval(()=>{
+      const el=(Date.now()-t0)/1000;left=Math.max(0,SEC-el);
+      bar.style.width=(left/SEC*100)+'%';lt.textContent=Math.ceil(left);
+      bar.parentNode.classList.toggle('low',left<=5);
+      if(left<=0)answer(null);
+    },100);timers.add(tick);
+    box.querySelectorAll('.qopt').forEach(b=>on(b,'click',()=>answer(b)));
+  }
+
+  function answer(btn){
+    if(locked)return;locked=true;stop();
+    const q=qs[qi],val=btn?btn.dataset.v:null,ok=val===q.a;
+    let gain=0;
+    if(ok){gain=100+Math.round(50*left/SEC);scores[pi]+=gain;right[pi]++}
+    box.querySelectorAll('.qopt').forEach(b=>{b.disabled=true;
+      if(b.dataset.v===q.a)b.classList.add('good');else if(b===btn)b.classList.add('bad')});
+    const fb=box.querySelector('#qfb');
+    fb.textContent=ok?'Correct! +'+gain:(btn?'Not quite. ':'Time is up. ')+'The answer is '+q.a+'.';
+    fb.className='qfb '+(ok?'ok':'no');
+    later(()=>{
+      qi++;
+      if(qi<qs.length)return ask();
+      qi=0;pi++;
+      if(pi<scores.length)return handoff();
+      finish();
+    },ok?1100:1800);
+  }
+
+  function finish(){
+    stop();
+    const order=scores.map((s,i)=>i).sort((a,b)=>scores[b]-scores[a]||right[b]-right[a]);
+    let note='';
+    if(mode==='solo'){
+      if(scores[0]>best){best=scores[0];note='New best score!';try{localStorage.setItem(LS,best)}catch(e){}}
+    }else{
+      const top=scores[order[0]],tied=order.filter(i=>scores[i]===top&&right[i]===right[order[0]]);
+      note=tied.length>1?'Tie between '+tied.map(nameOf).map(esc).join(' and '):esc(nameOf(order[0]))+' wins!';
+    }
+    box.innerHTML=`<div class="lu-setup"><h1>${mode==='solo'?'All done':'Final scores'}</h1>
+      ${note?'<p class="qwin">'+note+'</p>':''}
+      <div class="board">${order.map((i,r)=>`<div class="seat"><b class="rk">${r+1}</b><i style="background:${colour(i)}"></i><b>${esc(nameOf(i))}</b><span>${right[i]}/${qs.length} · <b>${scores[i]}</b></span></div>`).join('')}</div>
+      <button id="qagain">Play again</button><button id="qmenu" class="ghost">Change settings</button></div>`;
+    on(box.querySelector('#qagain'),'click',start);
+    on(box.querySelector('#qmenu'),'click',setup);
+  }
+
+  setup();
+  return ()=>{dead=true;stop();timers.forEach(clearTimeout);cleanups.forEach(f=>f())};
+}
+const QZ='<svg viewBox="0 0 120 84" aria-hidden="true"><rect x="10" y="8" width="100" height="68" rx="14" fill="#7b5cff"/><text x="60" y="58" text-anchor="middle" font-family="Fredoka,sans-serif" font-weight="700" font-size="56" fill="#fff">?</text><circle cx="100" cy="18" r="9" fill="#f5b400"/></svg>';
+GAMES.push({id:'quiz',title:'Quiz Time',blurb:'Pick a topic and beat the clock. Play solo, or pass the phone around.',players:'1 to 22 players, one phone',art:QZ,accent:'#7b5cff',mount:mountQuiz});
 renderCards();
 })();
 </script>
