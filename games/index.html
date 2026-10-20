@@ -41,6 +41,8 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .gcard.soon{cursor:default;box-shadow:none;border:2px dashed var(--dash);background:transparent;justify-content:center;align-items:center;text-align:center;min-height:200px}
 .gcard.soon:active{transform:none}
 
+.brand{font:700 15px var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.gbar .gb{margin-left:auto;font-size:13px}
 /* in-game frame */
 #gameview{height:100%;display:flex;flex-direction:column;gap:8px;max-width:760px;margin:0 auto}
 .gbar{display:flex;align-items:center;gap:12px}
@@ -162,6 +164,7 @@ body{margin:0}
 
 <div id="hub">
   <div>
+    <div class="brand">Volt &amp; Victor presents</div>
     <h1>Game Hub</h1>
     <p class="sub">Pick a game and play on this screen.</p>
     <div id="devbar"><span id="devlabel"></span><button id="devchg">Change</button></div>
@@ -178,7 +181,7 @@ body{margin:0}
   <p>You can change this any time from the top of the home screen.</p>
 </div></div>
 <div id="gameview" hidden>
-  <div class="gbar"><button id="back">&lsaquo; Games</button><span id="gtitle"></span></div>
+  <div class="gbar"><button id="back">&lsaquo; Games</button><span id="gtitle"></span><span class="brand gb">Volt &amp; Victor</span></div>
   <div id="groot"></div>
 </div>
 
@@ -2421,6 +2424,79 @@ function mountDuel(root){
 }
 const DGA='<svg viewBox="0 0 120 84" aria-hidden="true"><rect x="8" y="8" width="48" height="68" rx="12" fill="#ef4d63"/><rect x="64" y="8" width="48" height="68" rx="12" fill="#3d8bff"/><text x="32" y="52" text-anchor="middle" font-family="Fredoka,sans-serif" font-weight="700" font-size="30" fill="#fff">1</text><text x="88" y="52" text-anchor="middle" font-family="Fredoka,sans-serif" font-weight="700" font-size="30" fill="#fff">2</text><circle cx="60" cy="42" r="9" fill="#f5b400" stroke="#26233a" stroke-width="3"/></svg>';
 GAMES.push({id:'duel',title:'Duel Games',blurb:'Four quick head-to-head games: tug of war, quick draw, math race and dead centre.',players:'2 players, one screen',art:DGA,accent:'#ef4d63',mount:mountDuel});
+
+/* ---------- Tic-tac-toe ---------- */
+function mountTicTacToe(root){
+  const cleanups=[],timers=new Set();let dead=false;
+  const on=(t,e,f)=>{t.addEventListener(e,f);cleanups.push(()=>t.removeEventListener(e,f))};
+  const later=(f,ms)=>{const id=setTimeout(()=>{timers.delete(id);if(!dead)f()},ms);timers.add(id)};
+  const LINES=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  const css=document.createElement('style');
+  css.textContent=`
+.tt{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;gap:12px}
+.tt .tsc{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.tt .tsc div{background:var(--panel);border-radius:14px;padding:6px 14px;font:700 17px var(--display);border:3px solid transparent;box-shadow:0 3px 0 var(--shadow)}
+.tt .tsc div.on{border-color:var(--gold)}
+.tt .tb{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;width:100%}
+.tt .tg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:min(100%,380px,60vh);aspect-ratio:1}
+.tt .tg button{padding:0;background:var(--panel);color:var(--p1);font:700 clamp(44px,16vw,84px) var(--display);border-radius:18px;line-height:1}
+.tt .tg button.o{color:var(--p2)}
+.tt .tg button.w{background:color-mix(in srgb,var(--green) 35%,var(--panel))}
+.tt .tg button:disabled{opacity:1;cursor:default}
+.tt .tst{font:700 clamp(18px,5vw,24px) var(--display);min-height:1.3em;text-align:center}
+.tt .trow{display:flex;gap:10px}
+.tt .trow button{font-size:15px;padding:6px 16px}`;
+  root.appendChild(css);cleanups.push(()=>css.remove());
+  const box=document.createElement('div');box.className='lu';root.appendChild(box);
+  let cpu=false,b,turn,over,starter=0,sc=[0,0,0];
+
+  function menu(){
+    box.innerHTML='<div class="lu-setup"><h1>Tic-tac-toe</h1><p>Get three in a row. Take turns on this screen'+(HUB.device==='laptop'?', clicking a square.':' and pass the phone.')+'</p><button id="t2">Two players</button><button id="t1">Play the computer</button></div>';
+    box.querySelector('#t2').onclick=()=>begin(false);box.querySelector('#t1').onclick=()=>begin(true);
+  }
+  function begin(c){cpu=c;sc=[0,0,0];starter=0;round()}
+  const winner=bd=>{for(const l of LINES)if(bd[l[0]]&&bd[l[0]]===bd[l[1]]&&bd[l[0]]===bd[l[2]])return l;return null};
+  function round(){
+    b=Array(9).fill('');turn=starter;over=false;
+    box.innerHTML='<div class="tt"><div class="tsc" id="ts"></div><div class="tb"><div class="tg" id="tg"></div></div><div class="tst" id="tst"></div><div class="trow"><button class="ghost" id="tm">Menu</button></div></div>';
+    const g=box.querySelector('#tg');
+    g.innerHTML=b.map((_,i)=>'<button data-i="'+i+'" aria-label="Square '+(i+1)+', empty"></button>').join('');
+    on(g,'click',e=>{const el=e.target.closest('button');if(el&&!over&&!(cpu&&turn===1))play(+el.dataset.i)});
+    box.querySelector('#tm').onclick=menu;
+    draw();if(cpu&&turn===1)later(cpuMove,450);
+  }
+  const mark=t=>t?'O':'X';
+  function draw(msg){
+    const w=winner(b);
+    box.querySelectorAll('#tg button').forEach((el,i)=>{el.textContent=b[i];el.className=b[i]==='O'?'o':'';el.disabled=!!b[i]||over;
+      el.setAttribute('aria-label','Square '+(i+1)+', '+(b[i]||'empty'));if(w&&w.includes(i))el.classList.add('w')});
+    const nm=['X ('+(cpu?'You':'Red')+')','O ('+(cpu?'Computer':'Blue')+')'];
+    box.querySelector('#ts').innerHTML=nm.map((n,i)=>'<div class="'+(!over&&turn===i?'on':'')+'">'+n+': '+sc[i]+'</div>').join('')+'<div>Draws: '+sc[2]+'</div>';
+    box.querySelector('#tst').textContent=msg||(over?'':(cpu&&turn===1?'Computer is thinking…':nm[turn].split(' ')[0]+"'s turn"));
+  }
+  function play(i){
+    if(b[i]||over)return;b[i]=mark(turn);
+    const w=winner(b);
+    if(w||b.every(Boolean)){
+      over=true;
+      if(w){const t=b[w[0]]==='X'?0:1;sc[t]++;draw((t===0?(cpu?'You win!':'X wins!'):(cpu?'Computer wins!':'O wins!'))+' Next round soon…')}
+      else{sc[2]++;draw("It's a draw! Next round soon…")}
+      starter=1-starter;later(round,1800);return;
+    }
+    turn=1-turn;draw();if(cpu&&turn===1)later(cpuMove,500);
+  }
+  /* computer: win if it can, block if it must, else a mix of smart and random so it can be beaten */
+  function cpuMove(){
+    const free=b.map((v,i)=>v?-1:i).filter(i=>i>=0),tryLine=m=>{for(const i of free){b[i]=m;const w=winner(b);b[i]='';if(w)return i}return -1};
+    let m=tryLine('O');if(m<0)m=tryLine('X');
+    if(m<0||Math.random()<.12){const pref=[4,0,2,6,8,1,3,5,7].filter(i=>!b[i]);m=(Math.random()<.6?pref[0]:free[Math.floor(Math.random()*free.length)]);if(m===undefined)m=free[0]}
+    play(m);
+  }
+  menu();
+  return ()=>{dead=true;timers.forEach(clearTimeout);cleanups.forEach(f=>f())};
+}
+const TTT='<svg viewBox="0 0 120 84" aria-hidden="true"><path d="M44 8v68M76 8v68M18 31h84M18 55h84" stroke="#26233a" stroke-width="5" stroke-linecap="round"/><path d="M22 12l16 16M38 12L22 28" stroke="#ef4d63" stroke-width="6" stroke-linecap="round"/><circle cx="60" cy="43" r="9" fill="none" stroke="#3d8bff" stroke-width="6"/><path d="M82 60l16 16M98 60L82 76" stroke="#ef4d63" stroke-width="6" stroke-linecap="round"/></svg>';
+GAMES.push({id:'ttt',title:'Tic-tac-toe',blurb:'The classic. Play a friend on this screen, or take on the computer.',players:'1 or 2 players',art:TTT,accent:'#ef4d63',mount:mountTicTacToe});
 
 let savedDev=null;try{const v=localStorage.getItem('hub-device');if(v==='mobile'||v==='laptop')savedDev=v}catch(e){}
 setDevice(savedDev||guessDevice(),false);
