@@ -72,7 +72,10 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .seat{display:flex;align-items:center;gap:12px;background:var(--bg);border-radius:16px;padding:8px 10px}
 .seat i{width:26px;height:26px;border-radius:50%;flex:none}
 .seat b{font-family:var(--display);font-size:18px;flex:1}
-.seat button{padding:6px 14px;font-size:15px;min-width:112px}
+.seat button{padding:6px 14px;font-size:15px;min-width:96px}
+.mini{display:flex;align-items:center;gap:4px}
+.seat .mini button{min-width:0;padding:2px 11px;font-size:20px}
+.mini em{font-style:normal;font-family:var(--display);min-width:2ch;text-align:center;font-size:18px}
 button.ghost{background:var(--bg);color:var(--fg)}
 .lu-setup input{font:700 22px var(--display);text-align:center;width:100%;box-sizing:border-box;border:3px solid var(--cellline);border-radius:14px;padding:10px;background:var(--bg);color:var(--fg)}
 .lu-setup input:focus-visible{outline:3px solid var(--gold)}
@@ -80,8 +83,11 @@ button.ghost{background:var(--bg);color:var(--fg)}
 .lu-status{font-family:var(--display);font-size:clamp(17px,4.6vw,22px);text-align:center;min-height:1.3em}
 .lu-play .boardwrap{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;position:relative}
 .lu-play canvas{max-width:100%;max-height:100%;border-radius:20px;box-shadow:0 5px 0 var(--shadow);touch-action:none}
-.lu-bar{display:flex;align-items:center;gap:16px;padding-bottom:4px}
-.die{width:64px;height:64px;border-radius:16px;background:var(--panel);box-shadow:0 4px 0 var(--shadow);display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:10px;border:3px solid var(--fg)}
+.lu-bar{display:flex;align-items:center;gap:10px;width:100%;flex:none}
+.lu-bar .bst{flex:1;min-width:0;font-family:var(--display);font-size:clamp(14px,3.9vw,19px);line-height:1.2}
+.lu-bar.flip{transform:rotate(180deg)}
+.lu-bar button{padding:10px 16px;font-size:17px;flex:none}
+.die{box-sizing:border-box;flex:none;width:54px;height:54px;border-radius:14px;background:var(--panel);box-shadow:0 4px 0 var(--shadow);display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:8px;border:3px solid var(--fg)}
 .die span{border-radius:50%;margin:1px}
 .die span.on{background:var(--fg)}
 .die.roll{animation:shake .12s infinite}
@@ -338,29 +344,32 @@ function mountLudo(root,net,onExit){
   const isHost=!net||net.host;
   const seats=net?['off','off','off','off']:['human','cpu','off','off'];
   const own=[null,null,null,null];
+  const team=[1,1,1,1],mem=[0,0,0,0],MAXP=22;
   let stage='lobby',phase='idle',tok=[[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1]],turn=0,dice=0,sixes=0,movable=[],winner=-1,rolling=false,stText='',shown,G={v:0},seq=0,lastV=-1,lookFailed=false;
   const lastAct={};
 
   root.innerHTML=`<div class="lu">
     <div class="lu-setup" id="lsetup" hidden>
       <h1>Ludo</h1>
-      <p>Choose who plays each colour. Pick two to four seats. Set a seat to Computer to play alone.</p>
+      <p>Choose who plays each colour, up to 22 people in all. If a colour has several people, they take turns for it. Set a colour to Computer to play alone.</p>
       <div id="lseats"></div>
+      <p id="ltot" style="text-align:center"></p>
       <p>Roll a 6 to bring a token out. Land on another token to send it home. Starred squares are safe. Get all four tokens to the centre first.</p>
       <button id="lstart">Start game</button><button id="lback" class="ghost">Back</button>
     </div>
     <div class="lu-setup" id="llobby" hidden></div>
     <div class="lu-play" id="lplay" hidden>
-      <div class="lu-status" id="lstatus"></div>
+      <div class="lu-bar flip"><div class="bst" id="lstatus2"></div><div class="die" id="ldie2"></div><button id="lroll2">Roll dice</button></div>
       <div class="boardwrap"><canvas id="lcv" width="600" height="600"></canvas>
         <div class="overlay" id="lover" hidden><div class="modal"><h1 id="lwin"></h1><p>Nice game.</p><div id="lbtns" style="display:flex;flex-direction:column;gap:8px"><button id="lagain">Play again</button><button id="lmenu">Change players</button></div></div></div>
       </div>
-      <div class="lu-bar"><div class="die" id="ldie"></div><button id="lroll">Roll dice</button></div>
+      <div class="lu-bar"><div class="bst" id="lstatus"></div><div class="die" id="ldie"></div><button id="lroll">Roll dice</button></div>
     </div></div>`;
   const $=id=>root.querySelector('#'+id);
   const cv=$('lcv'),ctx=cv.getContext('2d'),S=40;
-  for(let i=0;i<9;i++)$('ldie').appendChild(document.createElement('span'));
-  function setDie(v){[...$('ldie').children].forEach((s,i)=>s.classList.toggle('on',v>0&&DOTS[v].includes(i)))}
+  const DIES=['ldie','ldie2'].map($);
+  DIES.forEach(d=>{for(let i=0;i<9;i++)d.appendChild(document.createElement('span'))});
+  function setDie(v){DIES.forEach(d=>[...d.children].forEach((s,i)=>s.classList.toggle('on',v>0&&DOTS[v].includes(i))))}
 
   /* ----- who is who ----- */
   const peers=()=>net?net.room.peers():[];
@@ -368,7 +377,7 @@ function mountLudo(root,net,onExit){
   const hostPeer=()=>peers().find(p=>p.presence&&p.presence.host&&p.presence.app==='ludo');
   const peerOf=id=>peers().find(p=>p.peer===id);
   function who(c){
-    if(!net)return NAMES[c];
+    if(!net)return NAMES[c]+(seats[c]==='human'&&team[c]>1?' '+(mem[c]+1):'');
     if(own[c]){const p=peerOf(own[c]);return (p&&p.presence.name)||NAMES[c]}
     return seats[c]==='cpu'?'Computer '+NAMES[c]:NAMES[c];
   }
@@ -378,13 +387,23 @@ function mountLudo(root,net,onExit){
   /* ----- local setup ----- */
   function drawSeats(){
     const box=$('lseats');box.innerHTML='';box.style.cssText='display:flex;flex-direction:column;gap:8px';
+    const total=()=>seats.reduce((a,m,c)=>a+(m==='human'?team[c]:0),0);
     seats.forEach((m,c)=>{
       const d=document.createElement('div');d.className='seat';
       d.innerHTML='<i style="background:var('+VARS[c]+')"></i><b>'+NAMES[c]+'</b>';
-      const b=document.createElement('button');b.textContent=m==='human'?'Person':m==='cpu'?'Computer':'Off';
+      if(m==='human'){
+        const s=document.createElement('span');s.className='mini';
+        s.innerHTML='<button aria-label="Fewer players">&minus;</button><em>'+team[c]+'</em><button aria-label="More players">+</button>';
+        const[mi,pl]=s.querySelectorAll('button');
+        mi.disabled=team[c]<=1;pl.disabled=total()>=MAXP;
+        mi.addEventListener('click',()=>{team[c]--;drawSeats()});pl.addEventListener('click',()=>{team[c]++;drawSeats()});
+        d.appendChild(s);
+      }
+      const b=document.createElement('button');b.textContent=m==='human'?'People':m==='cpu'?'Computer':'Off';
       b.addEventListener('click',()=>{seats[c]=m==='human'?'cpu':m==='cpu'?'off':'human';drawSeats()});
       d.appendChild(b);box.appendChild(d);
     });
+    $('ltot').textContent='People playing: '+total()+' of '+MAXP;
     $('lstart').disabled=seats.filter(s=>s!=='off').length<2;
   }
 
@@ -405,14 +424,14 @@ function mountLudo(root,net,onExit){
     $('lsetup').hidden=!!net||inPlay;$('llobby').hidden=!net||inPlay;$('lplay').hidden=!inPlay;
     if(net&&!inPlay)renderLobby();
     if(!inPlay)return;
-    const s=$('lstatus');s.textContent=stText;s.style.color='var('+VARS[turn]+')';
-    $('ldie').style.borderColor='var('+VARS[turn]+')';
-    $('ldie').classList.toggle('roll',rolling);
+    ['lstatus','lstatus2'].forEach(id=>{const s=$(id);s.textContent=stText;s.style.color='var('+VARS[turn]+')'});
+    DIES.forEach(d=>{d.style.borderColor='var('+VARS[turn]+')';d.classList.toggle('roll',rolling)});
     if(!rolling)setDie(dice);
-    $('lroll').disabled=!(phase==='roll'&&seats[turn]==='human'&&mine(turn)&&!rolling);
+    const canRoll=phase==='roll'&&seats[turn]==='human'&&mine(turn)&&!rolling;
+    $('lroll').disabled=$('lroll2').disabled=!canRoll;
     const over=stage==='over';
     $('lover').hidden=!over;
-    if(over){$('lwin').textContent=who(winner)+' wins!';$('lwin').style.color='var('+VARS[winner]+')';$('lbtns').style.display=isHost?'flex':'none'}
+    if(over){$('lwin').textContent=(net?who(winner):NAMES[winner]+(seats[winner]==='human'&&team[winner]>1?' team':''))+' wins!';$('lwin').style.color='var('+VARS[winner]+')';$('lbtns').style.display=isHost?'flex':'none'}
   }
   function publish(){
     if(!net||!net.host)return;
@@ -455,7 +474,7 @@ function mountLudo(root,net,onExit){
   /* ----- game rules (run locally, or on the host) ----- */
   function newGame(){
     tok=[0,1,2,3].map(()=>[-1,-1,-1,-1]);resetShown();
-    turn=seats.findIndex(s=>s!=='off');sixes=0;phase='idle';movable=[];winner=-1;rolling=false;dice=0;stage='play';
+    turn=seats.findIndex(s=>s!=='off');mem.fill(0);sixes=0;phase='idle';movable=[];winner=-1;rolling=false;dice=0;stage='play';
     startTurn();
   }
   function startTurn(){
@@ -507,7 +526,7 @@ function mountLudo(root,net,onExit){
     status(hit.length?who(turn)+' sent a token home!':nr===56?who(turn)+' got a token home!':'');
     later(()=>extra?startTurn():next(),750);
   }
-  function next(){sixes=0;do{turn=(turn+1)%4}while(seats[turn]==='off');startTurn()}
+  function next(){sixes=0;if(!net&&seats[turn]==='human')mem[turn]=(mem[turn]+1)%team[turn];do{turn=(turn+1)%4}while(seats[turn]==='off');startTurn()}
 
   /* ----- input: clicks become actions (sent to the host when online) ----- */
   function act(t,k){
@@ -516,6 +535,7 @@ function mountLudo(root,net,onExit){
     else if(t==='move'){if(phase==='pick'&&mine(turn)&&movable.includes(k))doMove(k)}
   }
   on($('lroll'),'click',()=>act('roll'));
+  on($('lroll2'),'click',()=>act('roll'));
   on($('lstart'),'click',()=>{stage='play';newGame()});
   on($('lagain'),'click',()=>{if(isHost)newGame()});
   on($('lmenu'),'click',()=>{
@@ -629,79 +649,84 @@ function mountSnakes(root){
   const cleanups=[];let dead=false;const timers=new Set();
   const on=(t,e,f)=>{t.addEventListener(e,f);cleanups.push(()=>t.removeEventListener(e,f))};
   const later=(f,ms)=>{const id=setTimeout(()=>{timers.delete(id);if(!dead)f()},ms);timers.add(id)};
-  const NAMES=['Red','Green','Yellow','Blue'],VARS=['--red','--green','--yellow','--blue'];
   const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   const SNAKES={16:6,47:26,49:11,56:53,62:19,64:60,87:24,93:73,95:75,98:78};
   const LADDERS={1:38,4:14,9:31,21:42,28:84,36:44,51:67,71:91,80:100};
   const JUMP=Object.assign({},SNAKES,LADDERS);
   const DOTS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
-  const S=60;
-  const seats=['human','cpu','off','off'];
-  let pos=[0,0,0,0],turn=0,phase='idle',dice=0,shown=[],winner=-1,stage='setup';
+  const S=60,MAXP=22,BH=660;
+  let people=1,bots=1,players=[],pos=[],shown=[],turn=0,phase='idle',dice=0,stage='setup';
+  const colour=i=>'hsl('+Math.round((i*137.5)%360)+',68%,50%)';
 
   root.innerHTML=`<div class="lu">
     <div class="lu-setup" id="ssetup">
       <h1>Snakes and Ladders</h1>
-      <p>Choose who plays each colour. Pick two to four seats, or set a seat to Computer to play alone.</p>
-      <div id="sseats"></div>
+      <p>Up to 22 players on one phone. Pass it around, or sit on both sides and use the dice nearest you.</p>
+      <div class="seat"><b>People</b><span class="mini"><button id="pm" aria-label="Fewer people">&minus;</button><em id="pc"></em><button id="pp" aria-label="More people">+</button></span></div>
+      <div class="seat"><b>Computer players</b><span class="mini"><button id="bm" aria-label="Fewer computer players">&minus;</button><em id="bc"></em><button id="bp" aria-label="More computer players">+</button></span></div>
+      <p id="stot" style="text-align:center"></p>
       <p>Roll the dice and move that many squares. Ladders take you up, snakes slide you down. You need the exact number to land on 100. A 6 gives you another roll.</p>
       <button id="sstart">Start game</button>
     </div>
     <div class="lu-play" id="splay" hidden>
-      <div class="lu-status" id="sstatus"></div>
-      <div class="boardwrap"><canvas id="scv" width="600" height="600"></canvas>
+      <div class="lu-bar flip"><div class="bst" id="sstatus2"></div><div class="die" id="sdie2"></div><button id="sroll2">Roll dice</button></div>
+      <div class="boardwrap"><canvas id="scv" width="600" height="${BH}"></canvas>
         <div class="overlay" id="sover" hidden><div class="modal"><h1 id="swin"></h1><p>Nice game.</p><button id="sagain">Play again</button><button id="smenu">Change players</button></div></div>
       </div>
-      <div class="lu-bar"><div class="die" id="sdie"></div><button id="sroll">Roll dice</button></div>
+      <div class="lu-bar"><div class="bst" id="sstatus"></div><div class="die" id="sdie"></div><button id="sroll">Roll dice</button></div>
     </div></div>`;
   const $=id=>root.querySelector('#'+id);
   const cv=$('scv'),ctx=cv.getContext('2d');
-  for(let i=0;i<9;i++)$('sdie').appendChild(document.createElement('span'));
-  const setDie=v=>[...$('sdie').children].forEach((s,i)=>s.classList.toggle('on',v>0&&DOTS[v].includes(i)));
+  const DIES=['sdie','sdie2'].map($);
+  DIES.forEach(d=>{for(let i=0;i<9;i++)d.appendChild(document.createElement('span'))});
+  const setDie=v=>DIES.forEach(d=>[...d.children].forEach((s,i)=>s.classList.toggle('on',v>0&&DOTS[v].includes(i))));
   setDie(0);
 
-  function drawSeats(){
-    const box=$('sseats');box.innerHTML='';box.style.cssText='display:flex;flex-direction:column;gap:8px';
-    seats.forEach((m,c)=>{
-      const d=document.createElement('div');d.className='seat';
-      d.innerHTML='<i style="background:var('+VARS[c]+')"></i><b>'+NAMES[c]+'</b>';
-      const b=document.createElement('button');b.textContent=m==='human'?'Person':m==='cpu'?'Computer':'Off';
-      b.addEventListener('click',()=>{seats[c]=m==='human'?'cpu':m==='cpu'?'off':'human';drawSeats()});
-      d.appendChild(b);box.appendChild(d);
-    });
-    $('sstart').disabled=seats.filter(s=>s!=='off').length<2;
+  function setup(){
+    $('pc').textContent=people;$('bc').textContent=bots;
+    $('pm').disabled=people<=0||people+bots<=2&&people<=1&&false;
+    $('pm').disabled=people<=0;$('bm').disabled=bots<=0;
+    const full=people+bots>=MAXP;$('pp').disabled=full;$('bp').disabled=full;
+    $('stot').textContent='Players: '+(people+bots)+' of '+MAXP;
+    $('sstart').disabled=people+bots<2;
   }
-  drawSeats();
+  on($('pm'),'click',()=>{people--;setup()});on($('pp'),'click',()=>{people++;setup()});
+  on($('bm'),'click',()=>{bots--;setup()});on($('bp'),'click',()=>{bots++;setup()});
+  setup();
 
-  // square number (1..100) -> centre point on the 600px board; 0 means off the board, below square 1
-  function pt(n){
-    if(n<=0)return[-.35*S,9.5*S+S*.2];
+  // square number (1..100) to the centre of its cell; 0 is the start strip under the board
+  function sq(n){
     const r=Math.floor((n-1)/10),c=r%2===0?(n-1)%10:9-(n-1)%10;
     return[(c+.5)*S,(9-r+.5)*S];
   }
-  const status=(t)=>{const s=$('sstatus');s.textContent=t;s.style.color='var('+VARS[turn]+')'};
-  function refresh(){$('sroll').disabled=!(phase==='roll'&&seats[turn]==='human');$('sdie').style.borderColor='var('+VARS[turn]+')'}
+  const cur=()=>players[turn];
+  const isBot=()=>cur().bot;
+  function status(t){['sstatus','sstatus2'].forEach(id=>{const s=$(id);s.textContent=t;s.style.color=colour(turn)})}
+  function refresh(){
+    const can=phase==='roll'&&!isBot();$('sroll').disabled=$('sroll2').disabled=!can;
+    DIES.forEach(d=>d.style.borderColor=colour(turn));
+  }
 
   function newGame(){
-    pos=[0,0,0,0];shown=pos.map(p=>pt(p).slice());turn=seats.findIndex(s=>s!=='off');winner=-1;
+    players=[];for(let i=0;i<people+bots;i++)players.push({name:i<people?'Player '+(i+1):'Computer '+(i-people+1),bot:i>=people});
+    pos=players.map(()=>0);shown=players.map(()=>[300,S*10+30]);turn=0;
     stage='play';$('ssetup').hidden=true;$('splay').hidden=false;$('sover').hidden=true;startTurn();
   }
   function startTurn(){
     phase='roll';setDie(0);refresh();
-    const cpu=seats[turn]==='cpu';
-    status(NAMES[turn]+(cpu?' (computer) is rolling…':', roll the dice'));
-    if(cpu)later(roll,800);
+    status(cur().name+(isBot()?' is rolling…':', roll the dice'));
+    if(isBot())later(roll,800);
   }
   function roll(){
     if(phase!=='roll')return;
-    phase='anim';refresh();$('sdie').classList.add('roll');
+    phase='anim';refresh();DIES.forEach(d=>d.classList.add('roll'));
     const spin=setInterval(()=>setDie(1+Math.floor(Math.random()*6)),70);cleanups.push(()=>clearInterval(spin));
     later(()=>{
-      clearInterval(spin);$('sdie').classList.remove('roll');
+      clearInterval(spin);DIES.forEach(d=>d.classList.remove('roll'));
       dice=1+Math.floor(Math.random()*6);setDie(dice);
       const target=pos[turn]+dice;
-      if(target>100){status(NAMES[turn]+' rolled a '+dice+'. Needs exact roll to reach 100.');later(finishTurn,1000);return}
-      status(NAMES[turn]+' rolled a '+dice);
+      if(target>100){status(cur().name+' rolled a '+dice+'. Needs the exact number to reach 100.');later(finishTurn,1000);return}
+      status(cur().name+' rolled a '+dice);
       step(target);
     },650);
   }
@@ -709,33 +734,35 @@ function mountSnakes(root){
     if(pos[turn]<target){pos[turn]++;later(()=>step(target),170);return}
     const j=JUMP[pos[turn]];
     if(j){
-      const up=j>pos[turn];
-      status(up?'A ladder! '+NAMES[turn]+' climbs to '+j:'A snake! '+NAMES[turn]+' slides to '+j);
+      status((j>pos[turn]?'A ladder! ':'A snake! ')+cur().name+(j>pos[turn]?' climbs to ':' slides to ')+j);
       later(()=>{pos[turn]=j;later(finishTurn,900)},500);
     }else later(finishTurn,350);
   }
   function finishTurn(){
     if(pos[turn]===100){
-      winner=turn;phase='over';$('swin').textContent=NAMES[turn]+' wins!';$('swin').style.color='var('+VARS[turn]+')';$('sover').hidden=false;status('');return}
-    if(dice===6&&pos[turn]+0>=0){status(NAMES[turn]+' rolled a 6 and goes again');later(startTurn,700);return}
-    do{turn=(turn+1)%4}while(seats[turn]==='off');startTurn();
+      phase='over';$('swin').textContent=cur().name+' wins!';$('swin').style.color=colour(turn);$('sover').hidden=false;status('');return}
+    if(dice===6){status(cur().name+' rolled a 6 and goes again');later(startTurn,700);return}
+    turn=(turn+1)%players.length;startTurn();
   }
-  on($('sroll'),'click',roll);
+  const act=()=>{if(!$('sroll').disabled)roll()};
+  on($('sroll'),'click',act);on($('sroll2'),'click',act);
   on($('sstart'),'click',newGame);
   on($('sagain'),'click',newGame);
-  on($('smenu'),'click',()=>{timers.forEach(clearTimeout);timers.clear();phase='idle';stage='setup';$('splay').hidden=true;$('ssetup').hidden=false});
+  on($('smenu'),'click',()=>{timers.forEach(clearTimeout);timers.clear();phase='idle';stage='setup';$('splay').hidden=true;$('ssetup').hidden=false;setup()});
   on(window,'keydown',e=>{if((e.code==='Space'||e.code==='Enter')&&!$('sroll').disabled&&stage==='play'){e.preventDefault();roll()}});
 
   function drawBoard(){
-    ctx.fillStyle=css('--board');ctx.fillRect(0,0,600,600);
+    ctx.fillStyle=css('--board');ctx.fillRect(0,0,600,BH);
     for(let n=1;n<=100;n++){
-      const[x,y]=pt(n);ctx.fillStyle=n%2?css('--cell'):css('--grass');ctx.globalAlpha=n%2?1:.45;ctx.fillRect(x-S/2,y-S/2,S,S);ctx.globalAlpha=1;
+      const[x,y]=sq(n);ctx.fillStyle=n%2?css('--cell'):css('--grass');ctx.globalAlpha=n%2?1:.45;ctx.fillRect(x-S/2,y-S/2,S,S);ctx.globalAlpha=1;
       ctx.strokeStyle=css('--cellline');ctx.lineWidth=1;ctx.strokeRect(x-S/2,y-S/2,S,S);
       ctx.fillStyle=css('--muted');ctx.font='600 13px Nunito,sans-serif';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText(n,x-S/2+4,y-S/2+3);
     }
+    ctx.fillStyle=css('--cell');ctx.fillRect(0,600,600,BH-600);ctx.strokeStyle=css('--cellline');ctx.strokeRect(0,600,600,BH-600);
+    ctx.fillStyle=css('--muted');ctx.font='600 12px Nunito,sans-serif';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('START',6,603);
     ctx.textBaseline='alphabetic';
-    for(const a in LADDERS){ // ladders: two rails and rungs
-      const[x1,y1]=pt(+a),[x2,y2]=pt(LADDERS[a]);
+    for(const a in LADDERS){
+      const[x1,y1]=sq(+a),[x2,y2]=sq(LADDERS[a]);
       const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),nx=-dy/L*7,ny=dx/L*7;
       ctx.strokeStyle='#b9772f';ctx.lineWidth=5;ctx.lineCap='round';
       ctx.beginPath();ctx.moveTo(x1+nx,y1+ny);ctx.lineTo(x2+nx,y2+ny);ctx.moveTo(x1-nx,y1-ny);ctx.lineTo(x2-nx,y2-ny);ctx.stroke();
@@ -743,8 +770,8 @@ function mountSnakes(root){
       for(let t=.08;t<1;t+=22/L){ctx.moveTo(x1+dx*t+nx,y1+dy*t+ny);ctx.lineTo(x1+dx*t-nx,y1+dy*t-ny)}
       ctx.stroke();
     }
-    for(const a in SNAKES){ // snakes: curved body with a head
-      const[x1,y1]=pt(+a),[x2,y2]=pt(SNAKES[a]);
+    for(const a in SNAKES){
+      const[x1,y1]=sq(+a),[x2,y2]=sq(SNAKES[a]);
       const mx=(x1+x2)/2,my=(y1+y2)/2,dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy);
       const nx=-dy/L*Math.min(40,L*.25),ny=dx/L*Math.min(40,L*.25);
       ctx.strokeStyle='#d9423c';ctx.lineWidth=10;ctx.lineCap='round';
@@ -758,16 +785,23 @@ function mountSnakes(root){
   }
   function drawTokens(){
     const groups={};
-    for(let c=0;c<4;c++)if(seats[c]!=='off')(groups[pos[c]]=groups[pos[c]]||[]).push(c);
-    for(const k in groups)groups[k].forEach((c,i,a)=>{
-      const t=pt(pos[c]),p=shown[c];
-      p[0]+=(t[0]-p[0])*.3;p[1]+=(t[1]-p[1])*.3;
-      const off=(i-(a.length-1)/2)*12,x=p[0]+off,y=p[1]+off*.3;
-      ctx.fillStyle='rgba(0,0,0,.25)';ctx.beginPath();ctx.ellipse(x,y+13,12,5,0,0,6.3);ctx.fill();
-      ctx.fillStyle=css(VARS[c]);ctx.beginPath();ctx.arc(x,y,13,0,6.3);ctx.fill();
-      ctx.lineWidth=3;ctx.strokeStyle='#fff';ctx.stroke();
-      ctx.fillStyle='rgba(255,255,255,.5)';ctx.beginPath();ctx.arc(x-4,y-4,3.5,0,6.3);ctx.fill();
-    });
+    players.forEach((p,i)=>(groups[pos[i]]=groups[pos[i]]||[]).push(i));
+    const big=players.length<=4;
+    for(const k in groups){
+      const ids=groups[k],n=ids.length,start=+k===0;
+      let cx,cy,w,h,cols;
+      if(start){cx=300;cy=630;w=600;h=60;cols=Math.min(n,22)}
+      else{[cx,cy]=sq(+k);w=S;h=S;cols=Math.ceil(Math.sqrt(n))}
+      const rows=Math.ceil(n/cols),cw=w/cols,ch=h/rows,rad=Math.max(5,Math.min(big?13:11,cw/2-1,ch/2-1));
+      ids.forEach((i,j)=>{
+        const tx=cx-w/2+(j%cols+.5)*cw,ty=cy-h/2+(Math.floor(j/cols)+.5)*ch,p=shown[i];
+        p[0]+=(tx-p[0])*.3;p[1]+=(ty-p[1])*.3;
+        ctx.fillStyle='rgba(0,0,0,.22)';ctx.beginPath();ctx.ellipse(p[0],p[1]+rad*.8,rad*.9,rad*.4,0,0,6.3);ctx.fill();
+        ctx.fillStyle=colour(i);ctx.beginPath();ctx.arc(p[0],p[1],rad,0,6.3);ctx.fill();
+        ctx.lineWidth=2;ctx.strokeStyle='#fff';ctx.stroke();
+        if(rad>=7){ctx.fillStyle='#fff';ctx.font='800 '+Math.round(rad*1.05)+'px Nunito,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(i+1,p[0],p[1]+1);ctx.textBaseline='alphabetic'}
+      });
+    }
   }
   function frame(){if(dead)return;if(stage==='play'){drawBoard();drawTokens()}requestAnimationFrame(frame)}
   requestAnimationFrame(frame);
@@ -778,8 +812,8 @@ const SNK='<svg viewBox="0 0 120 84" aria-hidden="true"><path d="M20 74 C20 40 6
 const CAR='<svg viewBox="0 0 120 84" aria-hidden="true"><rect x="8" y="30" width="104" height="30" rx="12" fill="#f0476b"/><path d="M30 32 42 12h36l14 20z" fill="#f0476b"/><path d="M40 30 48 17h24l9 13z" fill="#cfe7ff"/><circle cx="34" cy="62" r="11" fill="#26233a"/><circle cx="86" cy="62" r="11" fill="#26233a"/><circle cx="34" cy="62" r="4" fill="#ddd"/><circle cx="86" cy="62" r="4" fill="#ddd"/></svg>';
 const LUDO='<svg viewBox="0 0 120 84" aria-hidden="true"><rect x="22" y="2" width="76" height="80" rx="10" fill="none"/><circle cx="30" cy="42" r="16" fill="#ef4d63" stroke="#fff" stroke-width="4"/><circle cx="60" cy="30" r="16" fill="#2bb673" stroke="#fff" stroke-width="4"/><circle cx="90" cy="42" r="16" fill="#f5b400" stroke="#fff" stroke-width="4"/><circle cx="60" cy="58" r="16" fill="#3d8bff" stroke="#fff" stroke-width="4"/></svg>';
 GAMES.push({id:'turbo-duel',title:'Turbo Duel',blurb:'Two cars, one road. Dodge traffic, grab boosts, reach the flag first.',players:'2 players, one screen',art:CAR,accent:'#f0476b',mount:mountRace});
-GAMES.push({id:'ludo',title:'Ludo',blurb:'The classic dice race. Play with friends, or against the computer.',players:'1 to 4 players, one phone or online',art:LUDO,accent:'#2bb673',mount:mountLudoEntry});
-GAMES.push({id:'snakes',title:'Snakes and Ladders',blurb:'Climb the ladders, dodge the snakes, be first to 100.',players:'1 to 4 players, one phone',art:SNK,accent:'#f5b400',mount:mountSnakes});
+GAMES.push({id:'ludo',title:'Ludo',blurb:'The classic dice race. Play with friends, or against the computer.',players:'2 to 22 players, or online with up to 4',art:LUDO,accent:'#2bb673',mount:mountLudoEntry});
+GAMES.push({id:'snakes',title:'Snakes and Ladders',blurb:'Climb the ladders, dodge the snakes, be first to 100.',players:'2 to 22 players, one phone',art:SNK,accent:'#f5b400',mount:mountSnakes});
 renderCards();
 })();
 </script>
