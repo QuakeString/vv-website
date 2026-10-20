@@ -16,7 +16,7 @@
  --red:#ff6b82;--green:#3fd08a;--yellow:#ffc933;--blue:#5ba6ff;--board:#2b2850;--cell:#1f1c3a;--cellline:#3b3763;color-scheme:dark}
 html,body{height:100%}
 body{box-sizing:border-box;background:var(--bg);color:var(--fg);font-family:var(--body);font-weight:600;overflow-x:hidden;
- padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px;
+ padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px max(56px,env(safe-area-inset-bottom,0px));
  user-select:none;-webkit-user-select:none}
 body.playing{overflow:hidden;touch-action:none}
 [hidden]{display:none!important}
@@ -2086,7 +2086,7 @@ return function cleanup(){
 
 function mountBlockcraftHub(root){
   const box=document.createElement('div');root.appendChild(box);
-  const place=()=>{box.style.cssText='position:fixed;left:0;right:0;bottom:0;height:auto;z-index:5;top:'+Math.ceil(view.querySelector('.gbar').getBoundingClientRect().bottom+6)+'px'};
+  const place=()=>{box.style.cssText='position:fixed;left:0;right:0;bottom:56px;height:auto;z-index:5;top:'+Math.ceil(view.querySelector('.gbar').getBoundingClientRect().bottom+6)+'px'};
   place();window.addEventListener('resize',place);
   const stop=mountBlockcraft(box);
   return()=>{window.removeEventListener('resize',place);try{stop()}catch(e){}box.remove()};
