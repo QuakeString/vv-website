@@ -169,6 +169,20 @@ body{margin:0}
 [data-device="laptop"] .lu-bar .die{width:96px;height:96px;padding:14px}
 [data-device="laptop"] .lu-bar button{width:100%;font-size:20px}
 [data-device="laptop"] .kbhint{display:block}
+@media (orientation:landscape) and (max-height:520px){
+ body{padding-block:8px max(56px,env(safe-area-inset-bottom,0px))}
+ #gameview{max-width:none;gap:4px}
+ .gbar button{padding:4px 12px;font-size:14px}.gbar span{font-size:17px}
+ .lu-setup{max-width:560px;width:100%;align-self:center;padding:12px;gap:8px}
+ .lu-play{flex-direction:row;justify-content:center;gap:16px}
+ .lu-play .boardwrap{width:auto;flex:1;align-self:stretch}
+ .lu-bar.flip{display:none}
+ .lu-play .lu-bar{flex-direction:column;width:200px;gap:8px;align-self:center;flex:none}
+ .lu-bar .bst{text-align:center;font-size:17px}
+ .lu-bar .die{width:68px;height:68px;padding:10px}
+ .lu-bar button{width:100%;font-size:17px}
+ #hub h1{font-size:34px}
+}
 </style>
 </head>
 <body>
@@ -214,6 +228,7 @@ const GAMES=[];
 const $h=id=>document.getElementById(id);
 /* ---------- Device choice: HUB.device is 'mobile' or 'laptop'; games read it when they start ---------- */
 const HUB={device:'mobile'};
+const isLand=()=>HUB.device==='laptop'||matchMedia('(orientation:landscape) and (max-height:520px)').matches;
 const guessDevice=()=>{try{return matchMedia('(pointer:coarse)').matches?'mobile':'laptop'}catch(e){return 'mobile'}};
 function setDevice(d,save){
   HUB.device=d;document.documentElement.dataset.device=d;
@@ -2131,6 +2146,7 @@ function mountMemory(root){
 [data-device="laptop"] .mm .side{display:flex;flex-direction:column;gap:12px;width:210px;flex:none;justify-content:center}
 [data-device="laptop"] .mm .score{flex-direction:column;flex-wrap:nowrap}
 [data-device="laptop"] .mm .bar{flex-direction:column}
+@media (orientation:landscape) and (max-height:520px){.mm{flex-direction:row;gap:14px}.mm .side{display:flex;flex-direction:column;gap:8px;width:170px;flex:none;justify-content:center}.mm .score{flex-direction:column;flex-wrap:nowrap}.mm .bar{flex-direction:column;gap:4px}}
 @media (prefers-reduced-motion:reduce){.mm .in{transition:none}}`;
   root.appendChild(css);cleanups.push(()=>css.remove());
   const box=document.createElement('div');box.className='lu';root.appendChild(box);
@@ -2270,6 +2286,7 @@ function mountDuel(root){
 .dg .fld canvas{max-width:100%;max-height:100%;border-radius:18px;background:#1c1a33;touch-action:none;box-shadow:0 5px 0 var(--shadow)}
 .dg .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .dg .grid3 button{font-size:clamp(24px,8vw,44px);background:var(--bg)!important;color:var(--fg);padding:0}
+@media (orientation:landscape) and (max-height:520px){.dg{flex-direction:row}.dg .dp.p2{transform:none}.dg .dp.p1{order:-1}.dg .dp.p2{order:1}.dg .mid .s2{order:2}.dg .mid .stage{order:1}.dg .mid button{order:3}.dg .mid{flex-direction:column;width:120px;justify-content:center;gap:8px}.dg .rope{width:100%}.dg .info{font-size:clamp(20px,5vw,32px)}.dg .btns button{font-size:clamp(18px,4vw,26px)}.dgmenu{grid-template-columns:1fr 1fr}.dgmenu button{padding:6px 10px;font-size:17px}.dgmenu button small{font-size:11px}.dgmenu button span{font-size:26px}}
 @media (prefers-reduced-motion:reduce){.dg .dp,.dg .rope i{transition:none}}`;
   root.appendChild(css);cleanups.push(()=>css.remove());
   const box=document.createElement('div');box.className='lu';root.appendChild(box);
@@ -2293,7 +2310,7 @@ function mountDuel(root){
 
   function play(id){
     stopGame();const def=GAMES2.find(g=>g.id===id);
-    const sc=[0,0],WN=def.wins||WINS,lap=HUB.device==='laptop',pnl=[];let over=false,roundT=0;
+    const sc=[0,0],WN=def.wins||WINS,lap=isLand(),pnl=[];let over=false,roundT=0;
     box.innerHTML='<div class="dg"><div class="dp p2"><div class="say"></div><div class="info"></div><div class="btns"></div></div><div class="mid"><span class="s2">0</span><div class="stage"></div><span class="s1">0</span><button class="ghost" id="dgm">Menu</button></div><div class="dp p1"><div class="say"></div><div class="info"></div><div class="btns"></div></div></div>';
     const dg=box.querySelector('.dg'),stage=dg.querySelector('.stage');
     [box.querySelector('.p1'),box.querySelector('.p2')].forEach(e=>pnl.push({el:e,say:e.querySelector('.say'),info:e.querySelector('.info'),btns:e.querySelector('.btns')}));
@@ -2331,12 +2348,12 @@ function mountDuel(root){
 
   const GAMEFNS={
     tug(a,lap){
-      let pos=0;stageRope();
+      let pos=0,live=false;stageRope();
       function stageRope(){a.stage.innerHTML='<div class="rope"><i></i></div>'}
       const dot=()=>a.stage.querySelector('i');
       const draw=()=>{const d=dot();if(d)d.style.left=(50-pos*50)+'%'};
-      const pull=p=>{pos+=(p===0?1:-1)*0.07;draw();if(Math.abs(pos)>=1){pos=p===0?1:-1;draw();a.win(p,NAME[p]+' wins the pull!')}};
-      return{start(){pos=0;draw();a.say('Tap tap tap!');[0,1].forEach(p=>{a.info(p,'');})},
+      const pull=p=>{if(!live)return;pos+=(p===0?1:-1)*0.07;draw();if(Math.abs(pos)>=1){live=false;pos=p===0?1:-1;draw();a.win(p,NAME[p]+' wins the pull!')}};
+      return{start(){pos=0;live=true;draw();a.say('Tap tap tap!');[0,1].forEach(p=>{a.info(p,'');})},
         onKey:(p,i)=>pull(p),
         init:(()=>{[0,1].forEach(p=>a.btn(p,'PULL',p?'L':'A',()=>pull(p)))})()}
     },
@@ -2415,7 +2432,7 @@ function mountDuel(root){
       const PL=70,PT=10,R=7,side=lap?[0,V]:[V,0];
       let pu=[U/2,U/2],bu=0,bv=0,du=0,dv=0,wait=0,held={},last=0,run=true,msg='';
       const toField=(e)=>{const r=cv.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*cv.width,y=(e.clientY-r.top)/r.height*cv.height;return lap?[y,x]:[x,y]};
-      const move=e=>{if(lap)return;const [u,v]=toField(e),p=v>V/2?0:1;pu[p]=Math.max(PL/2,Math.min(U-PL/2,u))};
+      const move=e=>{const [u,v]=toField(e),p=lap?(v<V/2?0:1):(v>V/2?0:1);pu[p]=Math.max(PL/2,Math.min(U-PL/2,u))};
       a.on(cv,'pointerdown',e=>{e.preventDefault();try{cv.setPointerCapture(e.pointerId)}catch(_){}move(e)});
       a.on(cv,'pointermove',e=>{if(e.buttons||e.pointerType==='touch')move(e)});
       const K={KeyW:[0,-1],KeyS:[0,1],ArrowUp:[1,-1],ArrowDown:[1,1]};
@@ -2467,7 +2484,10 @@ function mountTicTacToe(root){
 .tt .tsc div{background:var(--panel);border-radius:14px;padding:6px 14px;font:700 17px var(--display);border:3px solid transparent;box-shadow:0 3px 0 var(--shadow)}
 .tt .tsc div.on{border-color:var(--gold)}
 .tt .tb{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;width:100%}
-.tt .tg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:min(100%,380px,60vh);aspect-ratio:1}
+.tt .tside{display:contents}
+.tt .tsc{order:0}.tt .tb{order:1}.tt .tst{order:2}.tt .trow{order:3}
+.tt .tg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:8px;width:300px;height:300px}
+@media (orientation:landscape) and (max-height:520px){.tt{flex-direction:row;justify-content:center;gap:24px}.tt .tside{display:flex;flex-direction:column;gap:10px;width:210px;justify-content:center}.tt .tsc{flex-direction:column;flex-wrap:nowrap;align-items:stretch}.tt .tb{flex:1;width:auto;height:100%;order:-1}.tt .tg button{font-size:clamp(30px,10vh,60px)}}
 .tt .tg button{padding:0;background:var(--panel);color:var(--p1);font:700 clamp(44px,16vw,84px) var(--display);border-radius:18px;line-height:1}
 .tt .tg button.o{color:var(--p2)}
 .tt .tg button.w{background:color-mix(in srgb,var(--green) 35%,var(--panel))}
@@ -2487,11 +2507,13 @@ function mountTicTacToe(root){
   const winner=bd=>{for(const l of LINES)if(bd[l[0]]&&bd[l[0]]===bd[l[1]]&&bd[l[0]]===bd[l[2]])return l;return null};
   function round(){
     b=Array(9).fill('');turn=starter;over=false;
-    box.innerHTML='<div class="tt"><div class="tsc" id="ts"></div><div class="tb"><div class="tg" id="tg"></div></div><div class="tst" id="tst"></div><div class="trow"><button class="ghost" id="tm">Menu</button></div></div>';
+    box.innerHTML='<div class="tt"><div class="tside"><div class="tsc" id="ts"></div><div class="tst" id="tst"></div><div class="trow"><button class="ghost" id="tm">Menu</button></div></div><div class="tb" id="tbd"><div class="tg" id="tg"></div></div></div>';
     const g=box.querySelector('#tg');
     g.innerHTML=b.map((_,i)=>'<button data-i="'+i+'" aria-label="Square '+(i+1)+', empty"></button>').join('');
     on(g,'click',e=>{const el=e.target.closest('button');if(el&&!over&&!(cpu&&turn===1))play(+el.dataset.i)});
     box.querySelector('#tm').onclick=menu;
+    const bd=box.querySelector('#tbd'),fit=()=>{const s=Math.max(120,Math.min(bd.clientWidth,bd.clientHeight,420));g.style.width=g.style.height=s+'px'};
+    fit();on(window,'resize',fit);later(fit,60);
     draw();if(cpu&&turn===1)later(cpuMove,450);
   }
   const mark=t=>t?'O':'X';
