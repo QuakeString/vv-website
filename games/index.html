@@ -43,6 +43,10 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 
 .brand{font:700 15px var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .gbar .gb{margin-left:auto;font-size:13px}
+#splash{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;transition:opacity .3s;text-align:center}
+#splash.out{opacity:0;pointer-events:none}
+#splash h1{font-family:var(--display);font-size:clamp(36px,11vw,64px);margin:0}
+#splash .brand{font-size:18px}
 /* in-game frame */
 #gameview{height:100%;display:flex;flex-direction:column;gap:8px;max-width:760px;margin:0 auto}
 .gbar{display:flex;align-items:center;gap:12px}
@@ -213,8 +217,17 @@ function open(g){
   hub.hidden=true;view.hidden=false;document.body.classList.add('playing');
   $h('gtitle').textContent=g.title;groot.innerHTML='';
   cleanup=g.mount(groot)||null;window.scrollTo(0,0);
+  splash(g);
+}
+/* start-up splash: company name, gone after a moment or on tap */
+function splash(g){
+  const s=document.createElement('div');s.id='splash';
+  s.innerHTML='<div class="brand">Volt &amp; Victor presents</div><h1></h1>';s.querySelector('h1').textContent=g.title;
+  const done=()=>{clearTimeout(tm);s.classList.add('out');setTimeout(()=>s.remove(),300)};
+  const tm=setTimeout(done,1600);s.addEventListener('pointerdown',done);document.body.appendChild(s);
 }
 function close(){
+  const sp=$h('splash');if(sp)sp.remove();
   try{cleanup&&cleanup()}catch(e){}
   cleanup=null;groot.innerHTML='';view.hidden=true;hub.hidden=false;document.body.classList.remove('playing');
 }
