@@ -1258,7 +1258,8 @@ GAMES.push({id:'quiz',title:'Quiz Time',blurb:'Pick a topic and beat the clock. 
 
 /* ---------- Blockcraft (voxel sandbox, WebGL) ---------- */
 /* Blockcraft: a small voxel sandbox in hand-written WebGL. Original textures and names. */
-function mountBlockcraft(root){
+function mountBlockcraft(root,opts){
+opts=opts||{};
 'use strict';
 const WX=128,WZ=128,WY=64,CS=16,NCX=WX/CS,NCZ=WZ/CS,SEA=18,EPS=1e-5;
 const SAVE='blockcraft-save-v1';
@@ -1289,6 +1290,8 @@ const RECIPES=[
 root.innerHTML=`<style>
 .bc{position:relative;width:100%;height:100%;flex:1;min-height:0;overflow:hidden;background:#79b6ff;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;font-family:"Trebuchet MS",system-ui,sans-serif;font-weight:700;color:#fff}
 .bc *{box-sizing:border-box}
+.bc [hidden]{display:none!important}
+.bc:not(.touch) .only-touch,.bc.touch .only-kb{display:none}
 .bc :where(button){all:unset;box-sizing:border-box;cursor:pointer;text-align:center;-webkit-tap-highlight-color:transparent}
 .bc canvas.bc-gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:0}
 .bc .hud{display:none}
@@ -1305,7 +1308,7 @@ root.innerHTML=`<style>
 .bc-slot.sel{border-color:#fff;background:rgba(220,220,220,.5);outline:2px solid #111}
 .bc-slot.pick{border-color:#ffd54a}
 .bc-slot img{width:84%;height:84%;image-rendering:pixelated;pointer-events:none}
-.bc-slot b{position:absolute;right:2px;bottom:0;font-size:12px;text-shadow:1px 1px 0 #000;pointer-events:none}
+.bc-slot b{color:#fff;position:absolute;right:2px;bottom:0;font-size:12px;text-shadow:1px 1px 0 #000;pointer-events:none}
 .bc-hearts{position:absolute;left:50%;bottom:calc(max(8px,env(safe-area-inset-bottom,0px)) + min(46px,8.6vw) + 18px);transform:translateX(-50%);display:flex;gap:1px;font-size:18px;line-height:1;text-shadow:1px 1px 0 #000;pointer-events:none;width:max-content}
 .bc-hearts span{color:#e23b3b}.bc-hearts span.e{color:#3a1a1a}
 .bc-hearts span.h{background:linear-gradient(90deg,#e23b3b 50%,#3a1a1a 50%);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -1321,8 +1324,8 @@ root.innerHTML=`<style>
 .bc-btn.jump{right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(76px + env(safe-area-inset-bottom,0px));width:72px;height:72px;line-height:66px}
 .bc-btn.down{right:calc(100px + env(safe-area-inset-right,0px));bottom:calc(66px + env(safe-area-inset-bottom,0px))}
 .bc-btn.fly{right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(158px + env(safe-area-inset-bottom,0px));width:50px;height:50px;line-height:44px;font-size:12px}
-.bc-btn.bag{right:10px;top:10px;width:50px;height:50px;line-height:44px;font-size:12px}
-.bc-btn.pz{left:10px;top:10px;width:50px;height:50px;line-height:44px;font-size:14px}
+.bc-btn.bag{right:max(10px,env(safe-area-inset-right,0px));top:10px;width:50px;height:50px;line-height:44px;font-size:12px}
+.bc-btn.pz{left:max(10px,env(safe-area-inset-left,0px));top:10px;width:50px;height:50px;line-height:44px;font-size:14px}
 .bc-btn.pz,.bc-btn.bag{display:none}
 .bc.playing .bc-btn.pz,.bc.playing .bc-btn.bag{display:block}
 .bc:not(.touch) .bc-btn.pz{left:auto;right:10px;top:70px;width:40px;height:40px;line-height:34px;font-size:12px}
@@ -1346,10 +1349,41 @@ root.innerHTML=`<style>
 .bc-grid .bc-slot{width:auto;height:auto;aspect-ratio:1}
 .bc-recipe{display:flex;align-items:center;gap:8px;padding:4px;background:#b0b0b0;margin-bottom:3px;font-size:13px;text-align:left}
 .bc-recipe .tx{flex:1}
-.bc-recipe .bc-mb{width:auto;padding:5px 10px;font-size:13px}
-.bc-recipe .bc-mb.dis{opacity:.45;pointer-events:none}
+.bc-recipe .bc-mb{width:auto;padding:5px 10px;font-size:13px;background:#4f8a3a;text-shadow:none}
+.bc-recipe .bc-mb.dis{background:#8a8a8a;opacity:.7;pointer-events:none}
+.bc-panel .bc-mb.sm{text-shadow:none}
 .bc-load .bar{width:min(300px,80vw);height:14px;border:3px solid #111;background:#333}
 .bc-load .bar i{display:block;height:100%;width:0;background:#6fd24a}
+@media (max-height:520px){
+.bc-title{display:none;flex-direction:row;flex-wrap:wrap;align-content:center;gap:8px 14px;padding:8px 18px}
+.bc-title.on{display:flex}
+.bc-title h1{flex:1 1 100%;font-size:42px;letter-spacing:2px;margin:0}
+.bc-title p{flex:1 1 100%;margin:0;font-size:13px}
+.bc-title .bc-mb{width:min(240px,42vw);padding:8px 8px;font-size:15px}
+.bc-title .bc-row{flex:1 1 100%;font-size:13px}
+.bc-title .bc-mb.sm{width:auto;min-width:84px}
+.bc-panel h3{margin:0 0 3px;font-size:12px}
+.bc-grid{gap:1px;margin-bottom:5px}
+.bc-recipe{padding:2px 6px;margin-bottom:2px;font-size:11px}
+.bc-recipe img{width:26px;height:26px}
+.bc-recipe .bc-mb{padding:4px 8px;font-size:12px}
+.bc-title .bc-help{display:none}
+.bc-mb{padding:8px 10px}
+.bc-pause{flex-direction:row;flex-wrap:wrap;align-content:center}
+.bc-pause h2{flex:1 1 100%}
+.bc-pause .bc-mb{width:min(260px,44vw)}
+.bc-inv{padding:6px}
+.bc-panel{max-width:min(96vw,760px);padding:8px 10px;display:grid;grid-template-columns:1fr 1fr;gap:0 14px;align-items:start}
+.bc-panel>.bc-row{grid-column:1/3}
+.bc-panel .bc-slot b{font-size:10px}
+.bc-grid{grid-template-columns:repeat(9,1fr)}
+.bc-panel .bc-col{min-width:0}
+.bc-load .bar{width:60vw}
+}
+.bc-rot{z-index:20;background:#17152a;display:none!important}
+.bc.touch.portrait.rotp .bc-rot{display:flex!important}
+.bc-rot svg{width:84px;height:84px;animation:bcrot 2.4s ease-in-out infinite}
+@keyframes bcrot{0%,20%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
 .bc-dead h2{margin:0;font-size:clamp(30px,9vw,56px);text-shadow:3px 3px 0 #300;color:#ff5a5a}
 </style>
 <canvas class="bc-gl" tabindex="0"></canvas>
@@ -1364,11 +1398,13 @@ root.innerHTML=`<style>
  <button class="bc-mb" data-a="survival">New survival world</button>
  <button class="bc-mb" data-a="creative">New creative world</button>
  <div class="bc-row"><span>View distance</span><button class="bc-mb sm" data-d="3">Near</button><button class="bc-mb sm" data-d="5">Normal</button><button class="bc-mb sm" data-d="8">Far</button></div>
- <div class="bc-help"><span class="onlymob">Touch: left side moves, drag on the right to look. Tap to place, hold to break or attack.</span><span class="onlylap">Keyboard: WASD, mouse, left click break, right click place, 1-9 or wheel to pick, E bag, F fly (creative), Shift sneak/down.</span></div></div>
+ <button class="bc-mb" data-a="exit" hidden>Back to game hub</button>
+ <div class="bc-help"><span class="only-touch">Touch: left side moves, drag on the right to look. Tap to place, hold to break or attack.</span><span class="only-kb">Keyboard: WASD, mouse, left click break, right click place, 1-9 or wheel to pick, E bag, F fly (creative), Shift sneak/down.</span></div></div>
 <div class="bc-screen bc-dim bc-pause"><h2 style="margin:0">Paused</h2>
- <button class="bc-mb" data-a="resume">Back to game</button><button class="bc-mb" data-a="title">Save and quit to title</button></div>
+ <button class="bc-mb" data-a="resume">Back to game</button><button class="bc-mb" data-a="title">Save and quit to title</button><button class="bc-mb" data-a="exit" hidden>Back to game hub</button></div>
 <div class="bc-screen bc-dim bc-inv"><div class="bc-panel"></div></div>
 <div class="bc-screen bc-dim bc-dead"><h2>You died</h2><button class="bc-mb" data-a="respawn">Respawn</button></div>
+<div class="bc-screen bc-rot"><svg viewBox="0 0 110 110" aria-hidden="true"><rect x="36" y="14" width="38" height="70" rx="8" fill="none" stroke="#fff" stroke-width="5"/></svg><h2 style="margin:0">Turn your phone sideways</h2><div class="bc-help">Blockcraft is played in landscape.</div></div>
 <div class="bc-screen bc-load bc-dim"><div>Building world...</div><div class="bar"><i></i></div></div>`;
 root.classList.add('bc');
 const $=s=>root.querySelector(s);
@@ -1436,7 +1472,12 @@ function prog(vs,fs,attrs){
 const PW=prog(`attribute vec3 aPos;attribute vec2 aUv;attribute vec2 aLE;uniform mat4 uVP;uniform vec3 uCam;
 varying vec2 vUv;varying float vL;varying float vE;varying float vD;
 void main(){gl_Position=uVP*vec4(aPos,1.0);vUv=aUv;vL=aLE.x;vE=aLE.y;vD=length(aPos-uCam);}`,
-`precision mediump float;uniform sampler2D uTex;uniform float uDay;uniform vec3 uFogCol;uniform vec2 uFog;uniform float uBlend;
+`#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+uniform sampler2D uTex;uniform float uDay;uniform vec3 uFogCol;uniform vec2 uFog;uniform float uBlend;
 varying vec2 vUv;varying float vL;varying float vE;varying float vD;
 void main(){vec4 c=texture2D(uTex,vUv);if(c.a<0.3)discard;
  float l=max(vL*uDay,vE*0.95);vec3 col=c.rgb*l;
@@ -1549,6 +1590,7 @@ function growTrees(){
     }
   }
 }
+function clearSpot(x,z){for(let dz=-2;dz<=2;dz++)for(let dx=-2;dx<=2;dx++)if(surfaceY(x+dx,z+dz)!==hm[(x+dx)+(z+dz)*WX])return false;return true}
 function surfaceY(x,z){for(let y=WY-1;y>=0;y--){const b=data[idx(x,y,z)];if(b&&b!==LEAVES&&b!==WATER)return y}return 0}
 
 /* ---------- chunks & meshing ---------- */
@@ -1731,14 +1773,14 @@ function hurtPlayer(n,kx,kz){
   P.hp=Math.max(0,P.hp-n);P.regen=-6;refreshHearts();sfx('hurt');
   elHurt.style.transition='none';elHurt.style.opacity=1;requestAnimationFrame(()=>{elHurt.style.transition='opacity .35s';elHurt.style.opacity=0});
   if(kx||kz){P.vx-=kx*5;P.vz-=kz*5;P.vy=Math.max(P.vy,4)}
-  if(P.hp<=0){state='dead';breaking=false;if(document.pointerLockElement)document.exitPointerLock();showScreen('dead')}
+  if(P.hp<=0){state='dead';resetInput();if(document.pointerLockElement)document.exitPointerLock();showScreen('dead')}
 }
 
 /* ---------- input ---------- */
 const keys={};let joy={id:-1,ox:0,oy:0,x:0,y:0},look={id:-1,x:0,y:0,sx:0,sy:0,t:0,moved:false},jumpHeld=false,downHeld=false,lastJump=0,touchUI=false;
 const coarse=matchMedia&&matchMedia('(pointer:coarse)').matches;
 function setTouch(v){touchUI=v;root.classList.toggle('touch',v)}
-setTouch(HUB.device==='mobile'?true:HUB.device==='laptop'?false:coarse||'ontouchstart' in window&&navigator.maxTouchPoints>0&&!matchMedia('(pointer:fine)').matches);
+setTouch(opts.device==='mobile'?true:opts.device==='laptop'?false:coarse||'ontouchstart' in window&&navigator.maxTouchPoints>0&&!matchMedia('(pointer:fine)').matches);
 const SENS=.0052;
 function isPlaying(){return state==='play'&&!scr.inv.classList.contains('on')}
 function lockPtr(){try{const p=canvas.requestPointerLock&&canvas.requestPointerLock();if(p&&p.catch)p.catch(()=>{})}catch(e){}}
@@ -1838,21 +1880,21 @@ function breakBlock(t){
 }
 function toggleInv(){
   const open=!scr.inv.classList.contains('on');
-  if(open){if(state!=='play')return;buildInv();showScreen('inv');breaking=false;if(document.pointerLockElement){justOpened=true;document.exitPointerLock();setTimeout(()=>{justOpened=false},300)}}
+  if(open){if(state!=='play')return;buildInv();showScreen('inv');resetInput();if(document.pointerLockElement){justOpened=true;document.exitPointerLock();setTimeout(()=>{justOpened=false},300)}}
   else{scr.inv.classList.remove('on');pick=-1;refreshHotbar()}
 }
 let pick=-1;
 function buildInv(){
   let h='<div class="bc-row" style="justify-content:space-between"><b>'+(mode==='creative'?'Creative blocks':'Backpack')+'</b><button class="bc-mb sm" data-x="close">Close</button></div>';
   if(mode==='creative'){
-    h+='<h3>Tap a block to put it in the selected hotbar slot</h3><div class="bc-grid">'+PALETTE.map(id=>slotHtml({id,n:1},'','data-pal="'+id+'"')).join('')+'</div>';
+    h+='<div class="bc-col" style="grid-column:1/3"><h3>Tap a block to put it in the selected hotbar slot</h3><div class="bc-grid" style="grid-template-columns:repeat(13,1fr)">'+PALETTE.map(id=>slotHtml({id,n:1},'','data-pal="'+id+'"')).join('')+'</div></div>';
   }else{
-    h+='<h3>Backpack (tap one slot, then another, to move)</h3><div class="bc-grid">'+inv.slice(9).map((s,i)=>slotHtml(s,pick===i+9?'pick':'','data-s="'+(i+9)+'"')).join('')+'</div>';
-    h+='<h3>Crafting</h3>'+RECIPES.map((r,i)=>{
+    h+='<div class="bc-col"><h3>Backpack (tap a slot, then another, to move)</h3><div class="bc-grid">'+inv.slice(9).map((s,i)=>slotHtml(s,pick===i+9?'pick':'','data-s="'+(i+9)+'"')).join('')+'</div><h3>Hotbar</h3><div class="bc-grid" style="margin:0">'+inv.slice(0,9).map((s,i)=>slotHtml(s,pick===i?'pick':i===hs?'sel':'','data-s="'+i+'"')).join('')+'</div></div>';
+    h+='</div><div class="bc-col"><h3>Crafting</h3>'+RECIPES.map((r,i)=>{
       const ok=Object.keys(r.need).every(k=>count(+k)>=r.need[k]);
-      return'<div class="bc-recipe"><img src="'+iconOf(r.out)+'" width="34" height="34" style="image-rendering:pixelated"><span class="tx"><b>'+r.n+' '+NAMES[r.out]+'</b><br>'+Object.keys(r.need).map(k=>r.need[k]+' '+NAMES[k]).join(' + ')+'</span><button class="bc-mb'+(ok?'':' dis')+'" data-r="'+i+'">Craft</button></div>'}).join('');
+      return'<div class="bc-recipe"><img src="'+iconOf(r.out)+'" width="34" height="34" style="image-rendering:pixelated"><span class="tx"><b>'+r.n+' '+NAMES[r.out]+'</b><br>'+Object.keys(r.need).map(k=>r.need[k]+' '+NAMES[k]).join(' + ')+'</span><button class="bc-mb'+(ok?'':' dis')+'" data-r="'+i+'">Craft</button></div>'}).join('')+'</div>';
   }
-  h+='<h3>Hotbar</h3><div class="bc-grid" style="margin:0">'+inv.slice(0,9).map((s,i)=>slotHtml(s,pick===i?'pick':i===hs?'sel':'','data-s="'+i+'"')).join('')+'</div>';
+  if(mode==='creative')h+='<div class="bc-col" style="grid-column:1/3"><h3>Hotbar</h3><div class="bc-grid" style="margin:0;grid-template-columns:repeat(9,minmax(0,52px))">'+inv.slice(0,9).map((s,i)=>slotHtml(s,i===hs?'sel':'','data-s="'+i+'"')).join('')+'</div></div>';
   elInv.innerHTML=h;
 }
 on(elInv,'click',e=>{
@@ -1886,6 +1928,7 @@ function loadSave(){try{return JSON.parse(localStorage.getItem(SAVE))}catch(e){r
 /* ---------- world start ---------- */
 const nextFrame=()=>new Promise(r=>requestAnimationFrame(r));
 async function startWorld(kind){
+  if(opts.rotatePrompt&&touchUI){try{const f=document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();const lk=()=>{try{const p=screen.orientation.lock('landscape');p&&p.catch&&p.catch(()=>{})}catch(e){}};f&&f.then?f.then(lk,lk):lk()}catch(e){}}
   state='load';showScreen('load');root.classList.remove('playing');
   const bar=$('.bc-load .bar i'),sv=kind==='continue'?loadSave():null;
   if(kind==='continue'&&!sv)kind='survival';
@@ -1898,7 +1941,7 @@ async function startWorld(kind){
   if(sv){[P.x,P.y,P.z,P.yaw,P.pitch,P.hp]=sv.p;spawnPt=sv.sp||spawnPt;inv=sv.inv;hs=sv.hs;time=sv.time}
   else{
     let best=null,bd=1e9;
-    for(let z=20;z<WZ-20;z+=2)for(let x=20;x<WX-20;x+=2){const h=hm[x+z*WX];if(h>SEA+1&&h<30){const d=Math.hypot(x-64,z-64);if(d<bd){bd=d;best=[x,z]}}}
+    for(let z=20;z<WZ-20;z+=2)for(let x=20;x<WX-20;x+=2){const h=hm[x+z*WX];if(h>SEA+1&&h<30){const d=Math.hypot(x-64,z-64);if(d<bd&&clearSpot(x,z)){bd=d;best=[x,z]}}}
     best=best||[64,64];const sy=surfaceY(best[0],best[1])+1;
     spawnPt=[best[0]+.5,sy,best[1]+.5];[P.x,P.y,P.z]=spawnPt;P.yaw=0;P.pitch=-.15;P.hp=20;time=.27;
     inv=Array(36).fill(null);hs=0;
@@ -1910,10 +1953,11 @@ async function startWorld(kind){
   refreshHotbar();refreshHearts();
   root.classList.add('playing');showScreen('none');state='play';
   if(!touchUI)lockPtr();
-  toast(mode==='creative'?'Creative: double-tap jump to fly':'Survival: punch a tree to get logs');
+  toast(touchUI?(mode==='creative'?'Tap to place, hold to break. FLY button to fly':'Tap to place, hold to break. Punch a tree for logs'):(mode==='creative'?'Creative: double-tap space to fly':'Survival: punch a tree to get logs'));
   lastSave=performance.now();
 }
-function pauseGame(){if(state!=='play')return;state='paused';breaking=false;if(document.pointerLockElement)document.exitPointerLock();showScreen('pause')}
+function resetInput(){breaking=false;jumpHeld=downHeld=false;for(const k in keys)keys[k]=false;joy.id=-1;look.id=-1;elJoy.style.display='none'}
+function pauseGame(){if(state!=='play')return;state='paused';resetInput();if(document.pointerLockElement)document.exitPointerLock();showScreen('pause')}
 function resumeGame(){if(state!=='paused')return;state='play';showScreen('none');if(!touchUI)lockPtr()}
 function toTitle(){saveGame();state='title';root.classList.remove('playing');showScreen('title');updateTitle();if(document.pointerLockElement)document.exitPointerLock()}
 function respawn(){P.x=spawnPt[0];P.y=spawnPt[1];P.z=spawnPt[2];P.vx=P.vy=P.vz=0;P.hp=20;P.peak=P.y;mobs=[];refreshHearts();state='play';showScreen('none');if(!touchUI)lockPtr()}
@@ -1926,9 +1970,11 @@ on(root,'click',e=>{
   if(b.dataset.d){viewDist=+b.dataset.d;try{localStorage.setItem('blockcraft-vd',viewDist)}catch(_){}updateTitle();return}
   const a=b.dataset.a;
   if(a==='continue'||a==='survival'||a==='creative'){if(!hasSave()&&a==='continue')return;startWorld(a)}
+  else if(a==='exit'){saveGame();opts.onExit&&opts.onExit()}
   else if(a==='resume')resumeGame();else if(a==='title')toTitle();else if(a==='respawn')respawn();
 });
 try{const v=+localStorage.getItem('blockcraft-vd');if(v)viewDist=v}catch(_){}
+root.querySelectorAll('[data-a=exit]').forEach(b=>{b.hidden=!opts.onExit});
 updateTitle();
 
 /* ---------- update ---------- */
@@ -1953,6 +1999,7 @@ function update(dt){
   const cy=Math.cos(P.yaw),sy=Math.sin(P.yaw);
   const wx=-sy*iy+cy*ix,wz=-cy*iy-sy*ix;
   const eyeY=P.y+EYE,inWater=getB(Math.floor(P.x),Math.floor(P.y+.4),Math.floor(P.z))===WATER,headWater=getB(Math.floor(P.x),Math.floor(eyeY),Math.floor(P.z))===WATER;
+  for(let n=0;n<10&&coll(P.x,P.y,P.z,PW_/2,PH);n++)P.y+=1;
   const steps=Math.max(1,Math.ceil(dt/(1/60))),h=dt/steps;
   for(let st=0;st<steps;st++){
     let sp=P.fly?(wantDown&&false?5:9):inWater?2.6:(run||keys.ControlLeft?5.6:4.4);
@@ -2003,9 +2050,10 @@ function update(dt){
 const chunkDist=c=>Math.hypot(c.cx*16+8-P.x,c.cz*16+8-P.z);
 
 /* ---------- render ---------- */
-let W=1,H=1;
+let W=1,H=1,rs=1,lowTicks=0,goodTicks=0;
 function resize(){
-  const dpr=Math.min(window.devicePixelRatio||1,touchUI?1.5:2),w=Math.max(1,Math.floor(root.clientWidth*dpr)),h=Math.max(1,Math.floor(root.clientHeight*dpr));
+  root.classList.toggle('portrait',root.clientHeight>root.clientWidth);if(opts.rotatePrompt)root.classList.add('rotp');
+  const dpr=Math.min(window.devicePixelRatio||1,touchUI?1.5:2)*rs,w=Math.max(1,Math.floor(root.clientWidth*dpr)),h=Math.max(1,Math.floor(root.clientHeight*dpr));
   if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}W=w;H=h;
 }
 on(window,'resize',resize);
@@ -2104,10 +2152,11 @@ let raf=0,last=performance.now();
 function frame(ts){
   if(dead)return;raf=requestAnimationFrame(frame);
   const dt=Math.min(.1,(ts-last)/1000);last=ts;
-  if(state==='play'||state==='dead'||(state==='paused'&&false))try{update(dt)}catch(e){console.error(e)}
+  if(state==='play'||state==='dead')try{update(dt)}catch(e){console.error(e)}
   else if(state==='paused'){time=(time+dt/DAY_LEN)%1}
   try{render()}catch(e){console.error(e)}
   fpsN++;fpsT+=dt;if(fpsT>.5){fps=Math.round(fpsN/fpsT);fpsN=0;fpsT=0;
+    if(state==='play'&&!document.hidden){if(fps<26){if(++lowTicks>=3&&rs>.55){rs=Math.max(.55,rs-.15);lowTicks=0;goodTicks=0;resize()}}else{lowTicks=0;if(fps>=58&&rs<1&&++goodTicks>=8){rs=Math.min(1,rs+.1);goodTicks=0;resize()}}}
     if(showDbg)elDbg.textContent='FPS '+fps+'\nXYZ '+P.x.toFixed(1)+' '+P.y.toFixed(1)+' '+P.z.toFixed(1)+'\nmobs '+mobs.length+'  time '+time.toFixed(2);else elDbg.textContent=''}
 }
 resize();raf=requestAnimationFrame(frame);
@@ -2129,13 +2178,16 @@ return function cleanup(){
 
 function mountBlockcraftHub(root){
   const box=document.createElement('div');root.appendChild(box);
-  const place=()=>{box.style.cssText='position:fixed;left:0;right:0;bottom:56px;height:auto;z-index:5;top:'+Math.ceil(view.querySelector('.gbar').getBoundingClientRect().bottom+6)+'px'};
+  const phone=HUB.device==='mobile';
+  /* on a phone held sideways the game covers the title bar; Back to game hub is in its menus */
+  const place=()=>{const full=phone&&innerWidth>innerHeight,top=full?0:Math.ceil(view.querySelector('.gbar').getBoundingClientRect().bottom+6);
+    box.style.cssText='position:fixed;left:0;right:0;height:auto;z-index:5;top:'+top+'px;bottom:'+(phone?'max(56px,env(safe-area-inset-bottom,0px))':'0px')};
   place();window.addEventListener('resize',place);
-  const stop=mountBlockcraft(box);
+  const stop=mountBlockcraft(box,{device:HUB.device,onExit:()=>$h('back').click()});
   return()=>{window.removeEventListener('resize',place);try{stop()}catch(e){}box.remove()};
 }
 const BLK='<svg viewBox="0 0 120 84" aria-hidden="true"><path d="M60 6 106 30 60 54 14 30z" fill="#5fae3f"/><path d="M14 30 60 54 60 80 14 56z" fill="#8a5a34"/><path d="M106 30 60 54 60 80 106 56z" fill="#6b4425"/><path d="M14 30 60 54 60 60 14 36z" fill="#4c9232"/><path d="M106 30 60 54 60 60 106 36z" fill="#3d7a28"/><path d="M34 40l10 5v8l-10-5zM74 60l12-6v8l-12 6z" fill="#7a7a7e"/></svg>';
-GAMES.push({id:'blockcraft',title:'Blockcraft',blurb:'Mine, build and survive the night in a 3D block world.',players:'1 player, touch or keyboard',art:BLK,accent:'#5fae3f',mount:mountBlockcraftHub});
+GAMES.push({id:'blockcraft',title:'Blockcraft',blurb:'Mine, build and survive the night in a 3D block world.',players:'1 player, touch or keyboard',art:BLK,accent:'#5fae3f',orient:'landscape',mount:mountBlockcraftHub});
 /* ---------- Memory Match ---------- */
 function mountMemory(root){
   const cleanups=[],timers=new Set();let dead=false;
