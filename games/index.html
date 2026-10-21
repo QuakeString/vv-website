@@ -54,6 +54,10 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .about .team b{color:var(--fg);margin-right:6px}
 .alinks{display:flex;flex-wrap:wrap;gap:10px}
 .alinks a{font:700 16px var(--display);color:var(--bg);background:var(--fg);border-radius:14px;padding:8px 16px;text-decoration:none}
+#rotate{position:fixed;inset:0;z-index:90;background:var(--bg);color:var(--fg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:24px}
+#rotate h1{font-family:var(--display);font-size:32px;margin:0}#rotate p{margin:0;color:var(--muted);max-width:26ch;line-height:1.4}
+#rotate .rot{transform-origin:55px 49px;animation:rturn 2.4s ease-in-out infinite}@keyframes rturn{0%,20%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
+@media (prefers-reduced-motion:reduce){#rotate .rot{animation:none}}
 /* in-game frame */
 #gameview{height:100%;display:flex;flex-direction:column;gap:8px;max-width:760px;margin:0 auto}
 .gbar{display:flex;align-items:center;gap:12px}
@@ -214,6 +218,7 @@ body{margin:0}
   </div>
   <p>You can change this any time from the top of the home screen.</p>
 </div></div>
+<div id="rotate" hidden><svg width="96" height="96" viewBox="0 0 110 110" aria-hidden="true"><g class="rot"><rect x="36" y="14" width="38" height="70" rx="8" fill="none" stroke="currentColor" stroke-width="5"/></g><path d="M18 62a40 40 0 0 0 20 36M18 62l-4-12M18 62l12-2" fill="none" stroke="var(--gold)" stroke-width="5" stroke-linecap="round"/></svg><h1 id="rtitle"></h1><p id="rtext"></p><button class="ghost" id="rskip">Play anyway</button></div>
 <div id="gameview" hidden>
   <div class="gbar"><button id="back">&lsaquo; Games</button><span id="gtitle"></span><span class="brand gb">Volt &amp; Victor</span></div>
   <div id="groot"></div>
@@ -248,7 +253,7 @@ function open(g){
   hub.hidden=true;view.hidden=false;document.body.classList.add('playing');
   $h('gtitle').textContent=g.title;groot.innerHTML='';
   cleanup=g.mount(groot)||null;window.scrollTo(0,0);
-  splash(g);
+  splash(g);orientFor(g);
 }
 /* start-up splash: company name, gone after a moment or on tap */
 function splash(g){
@@ -257,7 +262,30 @@ function splash(g){
   const done=()=>{clearTimeout(tm);s.classList.add('out');setTimeout(()=>s.remove(),300)};
   const tm=setTimeout(done,1600);s.addEventListener('pointerdown',done);document.body.appendChild(s);
 }
+/* orientation: each game has a preferred one (landscape, portrait or any). On phones we try fullscreen plus an orientation lock
+   from the tap that opened the game; where the browser refuses (for example iPhone Safari) a Rotate your phone screen is shown. */
+let want=null;
+function orientOk(){const land=innerWidth>innerHeight;return !want||want==='landscape'===land}
+function checkRot(){const r=$h('rotate');if(!r)return;r.hidden=orientOk()||skipRot;}
+let skipRot=false;
+function orientFor(g){
+  want=null;skipRot=false;
+  if(HUB.device!=='mobile'||!g.orient||g.orient==='any'){checkRot();return}
+  want=g.orient;
+  const lock=()=>{try{const p=screen.orientation&&screen.orientation.lock&&screen.orientation.lock(want);p&&p.catch&&p.catch(()=>{})}catch(e){}};
+  try{const f=document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();f&&f.then?f.then(lock,lock):lock()}catch(e){lock()}
+  $h('rtitle').textContent='Rotate your phone';
+  $h('rtext').textContent=g.title+' plays '+(want==='landscape'?'sideways':'upright')+'. Turn your phone to start.';
+  checkRot();
+}
+function orientFree(){
+  want=null;checkRot();
+  try{screen.orientation&&screen.orientation.unlock&&screen.orientation.unlock()}catch(e){}
+  try{document.fullscreenElement&&document.exitFullscreen()}catch(e){}
+}
+addEventListener('resize',checkRot);addEventListener('orientationchange',()=>setTimeout(checkRot,200));
 function close(){
+  orientFree();
   const sp=$h('splash');if(sp)sp.remove();
   try{cleanup&&cleanup()}catch(e){}
   cleanup=null;groot.innerHTML='';view.hidden=true;hub.hidden=false;document.body.classList.remove('playing');
@@ -2559,6 +2587,9 @@ document.addEventListener('keydown',e=>{
   const opts=[...groot.querySelectorAll('.qopt:not(:disabled)')];if(!opts.length)return;
   const i=/\d/.test(m[1])?+m[1]-1:m[1].charCodeAt(0)-65;if(opts[i]){e.preventDefault();opts[i].click()}
 });
+const ORIENT={blockcraft:'landscape',ludo:'portrait',snakes:'portrait',quiz:'portrait',memory:'portrait',ttt:'portrait','turbo-duel':'portrait'};
+GAMES.forEach(g=>g.orient=ORIENT[g.id]||'any');
+$h('rskip').addEventListener('click',()=>{skipRot=true;checkRot()});
 renderCards();
 })();
 </script>
