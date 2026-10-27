@@ -394,3 +394,64 @@
     });
   });
 })();
+
+/* Language switcher (Google Website Translator, driven by our own dropdown) */
+(function () {
+  'use strict';
+  var KEY = 'vv-lang';
+  var select = document.getElementById('lang-select');
+  if (!select) return;
+  var INCLUDED = 'en,hi,bn,ur,ta,te,mr,gu,kn,ml,pa,or,as,ne,ar,es,fr,de,pt,ru,zh-CN,ja,ko,id,tr,it,th,vi,fa,sw,nl,pl,uk,el,he,si,my,ms,fil';
+
+  function store(code) { try { localStorage.setItem(KEY, code); } catch (e) {} }
+  function saved() { try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; } }
+  function clearCookie() {
+    var host = location.hostname;
+    ['', ';domain=' + host, ';domain=.' + host].forEach(function (d) {
+      document.cookie = 'googtrans=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/' + d;
+    });
+  }
+  function combo() { return document.querySelector('select.goog-te-combo'); }
+  function apply(code, tries) {
+    var c = combo();
+    if (!c) {
+      if ((tries || 0) < 40) setTimeout(function () { apply(code, (tries || 0) + 1); }, 250);
+      return;
+    }
+    c.value = code;
+    c.dispatchEvent(new Event('change'));
+  }
+
+  window.googleTranslateElementInit = function () {
+    new google.translate.TranslateElement({
+      pageLanguage: 'en', includedLanguages: INCLUDED, autoDisplay: false
+    }, 'google_translate_element');
+    var code = saved();
+    if (code && code !== 'en') { select.value = code; apply(code); }
+  };
+
+  function load() {
+    if (load.done) return;
+    load.done = true;
+    var s = document.createElement('script');
+    s.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+    s.async = true;
+    document.head.appendChild(s);
+  }
+
+  select.addEventListener('change', function () {
+    var code = select.value;
+    store(code);
+    if (code === 'en') {
+      var wasTranslated = /googtrans=\/en\/(?!en)/.test(document.cookie) || document.documentElement.className.indexOf('translated') > -1;
+      clearCookie();
+      if (wasTranslated) location.reload();
+      return;
+    }
+    if (!load.done) load();
+    apply(code);
+  });
+
+  var start = saved();
+  if (start && start !== 'en') { select.value = start; load(); }
+})();
