@@ -401,7 +401,7 @@
   var KEY = 'vv-lang';
   var select = document.getElementById('lang-select');
   if (!select) return;
-  var INCLUDED = 'en,hi,bn,ur,ta,te,mr,gu,kn,ml,pa,or,as,ne,ar,es,fr,de,pt,ru,zh-CN,ja,ko,id,tr,it,th,vi,fa,sw,nl,pl,uk,el,he,si,my,ms,fil';
+  var INCLUDED = 'en,hi,bn,ur,ta,te,mr,gu,kn,ml,pa,or,as,ne,sd,sa,gom,mai,doi,bho,mni-Mtei,lus,ar,es,fr,de,pt,ru,zh-CN,ja,ko,id,tr,it,th,vi,fa,sw,nl,pl,uk,el,he,si,my,ms,fil';
 
   function store(code) { try { localStorage.setItem(KEY, code); } catch (e) {} }
   function saved() { try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; } }
