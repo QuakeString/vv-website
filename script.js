@@ -105,11 +105,12 @@
   // --- Portfolio filter + lightbox ---
   var chips = document.querySelectorAll('.chip[data-filter]');
   var pcards = document.querySelectorAll('.pcard');
+  var pfilterCards = document.querySelectorAll('#pgrid .pcard');
   chips.forEach(function (chip) {
     chip.addEventListener('click', function () {
       var f = chip.getAttribute('data-filter');
       chips.forEach(function (c) { c.setAttribute('aria-pressed', c === chip ? 'true' : 'false'); });
-      pcards.forEach(function (card) { card.hidden = !(f === 'all' || card.getAttribute('data-cat') === f); });
+      pfilterCards.forEach(function (card) { card.hidden = !(f === 'all' || card.getAttribute('data-cat') === f); });
     });
   });
   var lb = document.getElementById('lightbox');
