@@ -427,7 +427,7 @@ body{top:0 !important}
 font[style]{background:none !important; box-shadow:none !important}
 
 /* Wiring diagrams */
-.wgrid{display:flex; flex-wrap:wrap; justify-content:center; gap:20px}
+.wgrid{display:flex; flex-wrap:wrap; justify-content:center; gap:20px; max-width:780px; margin:0 auto}
 .wgrid .pcard{width:min(100%,360px)}
 .wgrid .pcard img{aspect-ratio:1200/640; object-fit:contain; background:#fff}
 @media (max-width:1320px){.header-inner{gap:14px} .nav{gap:15px}}
